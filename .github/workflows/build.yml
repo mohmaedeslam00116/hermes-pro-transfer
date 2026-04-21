@@ -15,20 +15,16 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.41.0'
           channel: 'stable'
           cache: true
-          cache-dependency-path: 'hermes_pro/pubspec.lock'
+          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
-        run: |
-          cd hermes_pro
-          flutter pub get
+        run: flutter pub get
 
       - name: Flutter Analyze
-        run: |
-          cd hermes_pro
-          flutter analyze
+        run: flutter analyze
 
   test:
     name: Flutter Test
@@ -39,20 +35,46 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.41.0'
           channel: 'stable'
           cache: true
-          cache-dependency-path: 'hermes_pro/pubspec.lock'
+          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
-        run: |
-          cd hermes_pro
-          flutter pub get
+        run: flutter pub get
 
       - name: Run Tests
-        run: |
-          cd hermes_pro
-          flutter test
+        run: flutter test
+
+  build-linux:
+    name: Build Linux Desktop
+    runs-on: ubuntu-latest
+    needs: analyze
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.0'
+          channel: 'stable'
+          cache: true
+          cache-dependency-path: 'pubspec.lock'
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Linux Release
+        run: flutter build linux --release
+
+      - name: Upload Linux Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: hermes-linux-release
+          path: build/linux/x64/release/bundle/
+          retention-days: 30
 
   build-debug:
     name: Build Debug APK
@@ -63,26 +85,22 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.41.0'
           channel: 'stable'
           cache: true
-          cache-dependency-path: 'hermes_pro/pubspec.lock'
+          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
-        run: |
-          cd hermes_pro
-          flutter pub get
+        run: flutter pub get
 
       - name: Build Debug APK
-        run: |
-          cd hermes_pro
-          flutter build apk --debug
+        run: flutter build apk --debug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: hermes-debug-apk
-          path: hermes_pro/build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 7
 
   build-release:
@@ -95,26 +113,22 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.41.0'
           channel: 'stable'
           cache: true
-          cache-dependency-path: 'hermes_pro/pubspec.lock'
+          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
-        run: |
-          cd hermes_pro
-          flutter pub get
+        run: flutter pub get
 
       - name: Build Release APK
-        run: |
-          cd hermes_pro
-          flutter build apk --release
+        run: flutter build apk --release
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: hermes-release-apk
-          path: hermes_pro/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
       - name: Create Release
@@ -136,6 +150,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: hermes_pro/build/app/outputs/flutter-apk/app-release.apk
+          asset_path: build/app/outputs/flutter-apk/app-release.apk
           asset_name: hermes-${{ github.ref }}-release.apk
           asset_content_type: application/vnd.android.aria
