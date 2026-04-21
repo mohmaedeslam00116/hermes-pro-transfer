@@ -96,11 +96,15 @@ jobs:
       - name: Build Windows Release
         run: flutter build windows --release
 
+      - name: Find Windows build output
+        shell: bash
+        run: find build -name "*.exe" -type f 2>/dev/null || dir /s /b build\\*.exe 2>nul || echo "No exe found"
+
       - name: Upload Windows Bundle
         uses: actions/upload-artifact@v4
         with:
           name: hermes-windows-release
-          path: build/windows/runner/Release/
+          path: build/windows/
           retention-days: 30
 
   build-debug:
