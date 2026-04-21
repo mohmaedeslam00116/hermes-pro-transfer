@@ -71,14 +71,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _completeOnboarding() async {
     await _requestPermissions();
 
-    if (mounted) {
-      final appProvider = context.read<AppProvider>();
-      await appProvider.completeOnboarding();
+    if (!mounted) return;
+    final appProvider = context.read<AppProvider>();
+    await appProvider.completeOnboarding();
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
-    }
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+    );
   }
 
   @override

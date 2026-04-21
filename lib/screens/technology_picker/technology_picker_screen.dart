@@ -8,6 +8,7 @@ import '../../providers/app_provider.dart';
 import '../../models/transfer_file.dart';
 import '../../models/transfer_state.dart';
 import '../transfer/transfer_screen.dart';
+import '../transfer/receive_screen.dart';
 
 /// Technology Option Data
 class TechnologyOption {
@@ -155,15 +156,27 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
     final appProvider = context.read<AppProvider>();
     appProvider.setTechnology(_selectedTechnology!);
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => TransferScreen(
-          files: _selectedFiles,
-          technology: _selectedTechnology!,
-          mode: widget.mode,
+    if (widget.mode == TransferMode.send) {
+      // Send mode - show TransferScreen with files
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => TransferScreen(
+            files: _selectedFiles,
+            technology: _selectedTechnology!,
+            mode: widget.mode,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      // Receive mode - show ReceiveScreen with QR scanner
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ReceiveScreen(
+            technology: _selectedTechnology!,
+          ),
+        ),
+      );
+    }
   }
 
   @override
