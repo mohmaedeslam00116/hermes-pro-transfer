@@ -1,88 +1,310 @@
-# Hermes - Local File Transfer App Specification
+# Hermes - Technical Specification
 
-## 1. Project Overview
+## 📋 Project Overview
 
-**Project Name**: Hermes (hermes_pro)  
-**Type**: Android Flutter Application  
-**Core Functionality**: Professional local file transfer application over LAN (Local Area Network) without internet or Bluetooth. Enables P2P file transfer between Android devices and computers.
+| Attribute | Value |
+|-----------|-------|
+| **Project Name** | Hermes |
+| **Project Type** | Android Mobile Application |
+| **Framework** | Flutter |
+| **Core Functionality** | Local file transfer over LAN without internet |
+| **Target Platform** | Android (SDK 26+) |
+| **License** | GNU GPLv3 |
+| **Repository** | [hermes-pro-transfer](https://github.com/mohmaedeslam00116/hermes-pro-transfer) |
 
-## 2. Technology Stack & Choices
+---
+
+## 🎯 Objectives
+
+Hermes is a modern, fast, and secure file transfer application designed for local network sharing. It enables users to send and receive files between Android devices and computers without internet connectivity or Bluetooth pairing.
+
+### Primary Goals
+1. Zero-configuration file sharing
+2. Maximum transfer speeds over local network
+3. Cross-platform compatibility (future)
+4. Privacy-first: no cloud, no tracking
+5. Beautiful, modern UI experience
+
+---
+
+## 🛠️ Technical Stack
 
 ### Framework & Language
-- **Framework**: Flutter 3.24.0+
-- **Language**: Dart 3.5.0+
-- **Platform**: Android (minSdkVersion 26 - Android 8.0 Oreo)
-- **Organization**: com.hermes.pro
+- **Framework**: Flutter 3.24.0
+- **Language**: Dart 3.x
+- **Min Android SDK**: 26 (Android 8.0 Oreo)
+- **Target Android SDK**: 35
 
-### Key Libraries/Dependencies
-```yaml
-dependencies:
-  dio: ^5.4.0              # HTTP/HTTPS file transfer
-  file_picker: ^8.0.0      # File selection
-  permission_handler: ^11.3.0  # Storage/Wi-Fi permissions
-  network_info_plus: ^6.0.0  # Local IP detection
-  qr_flutter: ^4.1.0       # QR Code generation
-  mobile_scanner: ^5.1.0   # QR Code scanning
-  path_provider: ^2.1.3   # Download folder
-  flutter_webrtc: ^0.11.0  # WebRTC P2P
-  wifi_direct: ^0.2.0     # Wi-Fi Direct
-  shared_preferences: ^2.2.3  # Settings storage
-  provider: ^6.1.2        # State management
+### Key Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `provider` | ^6.1.0 | State management |
+| `dio` | ^5.0.0 | HTTP client for transfers |
+| `file_picker` | ^6.0.0 | File selection |
+| `permission_handler` | ^11.0.0 | Runtime permissions |
+| `network_info_plus` | ^5.0.0 | Network/IP detection |
+| `qr_flutter` | ^4.0.0 | QR code generation |
+| `mobile_scanner` | ^4.0.0 | QR code scanning |
+| `path_provider` | ^2.0.15 | File system paths |
+
+### Development Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `flutter_test` | SDK | Unit testing |
+| `flutter_lints` | ^5.0.0 | Code quality |
+
+---
+
+## 🏗️ Architecture
+
+### Design Pattern
+- **Clean Architecture** with separation of concerns
+- **Provider** for reactive state management
+- **Service-oriented** backend design
+
+### Project Structure
+
+```
+lib/
+├── core/
+│   ├── constants/
+│   │   └── app_constants.dart    # App-wide constants
+│   └── theme/
+│       └── app_theme.dart       # Theme configuration
+├── models/
+│   └── transfer_state.dart      # Data models
+├── providers/
+│   └── app_provider.dart        # Global state
+├── services/
+│   ├── network_service.dart     # Network utilities
+│   └── file_service.dart       # File operations
+├── screens/
+│   ├── onboarding/              # First-run screens
+│   ├── dashboard/               # Main hub
+│   ├── technology_picker/       # Tech selection
+│   └── transfer/               # Transfer UI
+└── main.dart                   # Entry point
 ```
 
-### State Management
-- **Provider** for reactive state management
-- Dedicated providers for: Transfer State, App State, Settings
+---
 
-### Architecture Pattern
-- **Clean Architecture** with 3 layers:
-  - Presentation (UI/Screens/Widgets)
-  - Domain (Business Logic/Services)
-  - Data (Repositories/Models)
+## 📱 Screen Flow
 
-## 3. Feature List
+```
+┌─────────────────┐
+│   Onboarding    │ (First run only)
+│  Permissions    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│    Dashboard    │ ◄─────────────┐
+│  Send / Receive │              │
+└────────┬────────┘              │
+         │                       │
+    ┌────┴────┐                  │
+    │         │                  │
+    ▼         ▼                  │
+┌───────┐  ┌───────┐             │
+│ Send  │  │Receive│             │
+└───┬───┘  └───┬───┘             │
+    │          │                 │
+    ▼          ▼                 │
+┌─────────────────────┐           │
+│ Technology Picker   │          │
+│ HTTP / WiFi Direct / WebRTC    │
+└──────────┬──────────┘          │
+           │                     │
+           ▼                     │
+┌─────────────────────┐           │
+│   Transfer Screen   │───────────┘
+│  Progress / QR Code│
+└─────────────────────┘
+```
 
-### Core Features
-1. **Onboarding Screen**: First-run permissions request (Storage, Wi-Fi)
-2. **Dashboard Screen**: Two main options - Send / Receive
-3. **Technology Picker**: Choose between 3 transfer technologies
-4. **Transfer Screen**: Execute send/receive operations
+---
 
-### Transfer Technologies
-1. **HTTP Server**: Simple, reliable, works everywhere
-2. **Wi-Fi Direct**: Fast, peer-to-peer without router
-3. **WebRTC**: Modern, secure, low-latency P2P
+## 🔧 Transfer Technologies
 
-### Advanced Features
-- QR Code generation for easy sharing
-- QR Code scanning for receiving
-- Real-time progress tracking
-- Automatic fallback on connection failure
-- Resume interrupted transfers
-- Dark mode support
+### 1. HTTP Server
+- **Protocol**: HTTP/HTTPS
+- **Port**: Dynamic (typically 8080)
+- **Method**: Device starts HTTP server, other devices download
+- **Pros**: Maximum compatibility, works everywhere
+- **Cons**: Requires server device to stay awake
 
-## 4. UI/UX Design Direction
+### 2. Wi-Fi Direct
+- **Protocol**: Wi-Fi P2P
+- **Method**: Direct device-to-device connection
+- **Pros**: No router needed, fastest speeds
+- **Cons**: Limited device support, setup complexity
 
-### Overall Visual Style
-- Modern, clean Material Design 3
-- Professional, minimalist interface
-- Following 2026 best practices
+### 3. WebRTC
+- **Protocol**: WebRTC DataChannel
+- **Method**: P2P data transfer
+- **Pros**: Encrypted by default, low latency
+- **Cons**: NAT traversal issues, complex setup
+
+---
+
+## 🎨 UI/UX Design
 
 ### Color Scheme
-- Primary: Deep Blue (#1565C0)
-- Secondary: Teal Accent (#00BFA5)
-- Background: Dark/Light based on theme
-- Surface: Elevated cards with subtle shadows
+- **Primary**: Teal (#00897B)
+- **Secondary**: Orange (#FF6D00)
+- **Background Light**: #FAFAFA
+- **Background Dark**: #121212
+- **Surface Dark**: #1E1E1E
 
-### Layout Approach
-- Single-page flow with navigation
-- Bottom navigation for main sections
-- Modal sheets for options
-- Full-screen transfer progress views
+### Typography
+- **Font Family**: Plus Jakarta Sans (Google Fonts)
+- **Headings**: Bold, larger sizes
+- **Body**: Regular weight, readable sizes
 
-### Key UI Components
-- Large touch-friendly buttons
-- Animated transitions
-- Progress indicators
-- Status badges
-- QR code displays with copy actions
+### Design Principles
+- **Glassmorphism**: Frosted glass effects on cards
+- **Gradient Icons**: Modern gradient iconography
+- **3D Cards**: Elevated cards with shadows
+- **Smooth Animations**: Fluid transitions
+- **Dark Mode**: Full dark theme support
+
+---
+
+## 🔒 Security
+
+### Transfer Security
+- HTTPS with self-signed certificates
+- Local network only (no internet exposure)
+- No cloud storage or third-party servers
+- User-controlled access
+
+### Data Privacy
+- No analytics or tracking
+- No data collection
+- All processing done locally
+- Files never leave your network
+
+---
+
+## 📊 Performance Requirements
+
+| Metric | Target |
+|--------|--------|
+| App Launch Time | < 2 seconds |
+| File List Loading | < 500ms |
+| QR Code Generation | < 100ms |
+| Transfer Speed | Network-limited |
+| Memory Usage | < 150MB |
+| APK Size | < 110MB |
+
+---
+
+## 📦 CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+```
+Push/PR to main
+      │
+      ▼
+┌─────────────┐
+│ Flutter     │
+│ Analyze     │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Build Debug │
+│ APK         │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Build       │
+│ Release APK │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Upload to    │
+│ Release      │
+└─────────────┘
+```
+
+---
+
+## 🚀 Future Roadmap
+
+### Phase 1 (v1.0)
+- [x] Basic file transfer
+- [x] QR code connection
+- [x] Multiple technologies
+- [x] Dark mode
+
+### Phase 2 (v1.1)
+- [ ] Transfer history
+- [ ] Multiple file selection
+- [ ] Pause/Resume
+
+### Phase 3 (v2.0)
+- [ ] iOS support
+- [ ] Desktop apps
+- [ ] File preview
+- [ ] Compression options
+
+---
+
+## 📝 API Reference
+
+### NetworkService
+```dart
+class NetworkService {
+  Future<String?> getLocalIP();
+  Future<bool> isOnLocalNetwork();
+  String generateConnectionString(String ip, int port);
+}
+```
+
+### FileService
+```dart
+class FileService {
+  Future<List<File>> pickFiles();
+  Future<String> getDownloadPath();
+  Future<void> saveFile(String name, bytes);
+}
+```
+
+---
+
+## 🧪 Testing Strategy
+
+### Unit Tests
+- Service layer logic
+- Model serialization
+- Utility functions
+
+### Widget Tests
+- Screen rendering
+- User interactions
+- State changes
+
+### Integration Tests
+- Full transfer flow
+- Multi-screen navigation
+
+---
+
+## 📄 Compliance
+
+- **GDPR**: No user data collection
+- **Play Store**: Following all guidelines
+- **GPLv3**: Open source compliance
+
+---
+
+<div align="center">
+  <p>Last Updated: 2026-04-21</p>
+  <p>Hermes © 2026 | <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer">GitHub</a></p>
+</div>

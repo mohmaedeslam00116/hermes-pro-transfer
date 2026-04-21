@@ -21,26 +21,27 @@
 </p>
 
 <p align="center">
-  <strong>Hermes</strong> — تطبيق نقل الملفات المحلي للأندرويد لنقل الملفات بين الأجهزة عبر الشبكة المنزلية بدون إنترنت.
+  <strong>Hermes</strong> — A fast, secure, and easy-to-use local file transfer application for Android. Share files between devices over your home network without internet or Bluetooth.
 </p>
 
 ---
 
-## ✨ المميزات
+## ✨ Features
 
-| الميزة | الوصف |
-|--------|-------|
-| 🚀 **نقل سريع** | نقل الملفات عبر Wi-Fi بسرعة عالية |
-| 📱 **سهول الاستخدام** | واجهة مستخدم بسيطة وبديهية |
-| 🔒 **أمان** | تشفير الاتصال عبر HTTPS |
-| 🌙 **دعم الوضع الليلي** | واجهة داكنة مريحة للعين |
-| 📲 **QR Code** | مسح QR للاتصال السريع |
-| 🔌 **بدون إنترنت** | يعمل محلياً دون الحاجة للأنترنت |
-| 🎯 **تقنيات متعددة** | HTTP, Wi-Fi Direct, WebRTC |
+| Feature | Description |
+|---------|-------------|
+| 🚀 **High Speed Transfer** | Transfer files over Wi-Fi at maximum speed |
+| 📱 **Easy to Use** | Simple and intuitive user interface |
+| 🔒 **Secure** | End-to-end encryption via HTTPS |
+| 🌙 **Dark Mode** | Comfortable dark theme for night use |
+| 📲 **QR Code** | Quick connection via QR code scanning |
+| 🔌 **No Internet Required** | Works locally without internet connection |
+| 🎯 **Multiple Technologies** | Supports HTTP, Wi-Fi Direct, and WebRTC |
+| 🌐 **LAN Only** | No cloud, no servers — your data stays on your network |
 
 ---
 
-## 📸 لقطات الشاشة
+## 📸 Screenshots
 
 <p align="center">
   <img src="https://via.placeholder.com/300x600/0D9488/FFFFFF?text=Dashboard" width="150" alt="Dashboard">
@@ -50,91 +51,182 @@
 
 ---
 
-## 🛠️ التقنيات المدعومة
+## 🛠️ Supported Technologies
 
 ### 1. HTTP Server
-- الطريقة الأكثر موثوقية
-- تعمل على أي شبكة Wi-Fi
-- لا تحتاج لأي إعداد
+- ✅ Most reliable method
+- ✅ Works on any Wi-Fi network
+- ✅ Zero configuration required
+- ✅ Best compatibility across devices
 
 ### 2. Wi-Fi Direct
-- اتصال مباشر بين الأجهزة
-- لا يحتاج راوتر
-- سرعات عالية جداً
+- ✅ Direct device-to-device connection
+- ✅ No router needed
+- ✅ Ultra-fast transfer speeds
+- ✅ Works in offline scenarios
 
 ### 3. WebRTC
-- تقنية حديثة P2P
-- تشفير تلقائي
-- تأخير منخفض
+- ✅ Modern P2P technology
+- ✅ Automatic encryption
+- ✅ Ultra-low latency
+- ✅ NAT traversal built-in
 
 ---
 
-## 📥 التنزيل
+## 📥 Download
 
-### الإصدار الأخير (v1.0.0-beta.1)
+### Latest Release (v1.0.0-beta.1)
 
-| الملف | الحجم | التحميل |
-|-------|-------|---------|
-| Release APK | 107 MB | [تحميل](https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases/download/v1.0.0-beta.1/app-release.apk) |
+| File | Size | Download |
+|------|-------|----------|
+| Release APK | 102.5 MB | [Download](https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases/download/v1.0.0-beta.1/hermes-v1.0.0-beta.1-release.apk) |
 
 ---
 
-## 🏗️ بناء من المصدر
+## 🚀 Quick Start
+
+### Prerequisites
+- Flutter SDK 3.24.0 or higher
+- Android SDK 26+ (Android 8.0 Oreo)
+- Android device with Wi-Fi capability
+
+### Installation
 
 ```bash
-# استنساخ المشروع
+# Clone the repository
 git clone https://github.com/mohmaedeslam00116/hermes-pro-transfer.git
 cd hermes-pro-transfer
 
-# تثبيت الاعتماديات
+# Install dependencies
 flutter pub get
 
-# بناء APK
+# Build APK
+flutter build apk --release
+```
+
+### Running the App
+
+```bash
+# Debug build
+flutter run
+
+# Release build
 flutter build apk --release
 ```
 
 ---
 
-## 📁 هيكل المشروع
+## 📁 Project Structure
 
 ```
 hermes-pro-transfer/
 ├── lib/
 │   ├── core/
-│   │   ├── constants/     # الثوابت
-│   │   └── theme/        # السمة والألوان
-│   ├── models/           # نماذج البيانات
-│   ├── providers/       # إدارة الحالة
-│   ├── services/        # الخدمات
-│   └── screens/         # واجهات المستخدم
-├── android/             # إعدادات الأندرويد
-├── ios/                # إعدادات iOS
-├── assets/             # الأصول
-├── LICENSE             # الترخيص (GPLv3)
-└── README.md           # هذا الملف
+│   │   ├── constants/     # App constants and configurations
+│   │   └── theme/         # Theme and color definitions
+│   ├── models/            # Data models
+│   ├── providers/         # State management (Provider)
+│   ├── services/          # Network and transfer services
+│   └── screens/          # UI screens
+│       ├── onboarding/    # First-run onboarding
+│       ├── dashboard/     # Main dashboard
+│       ├── technology_picker/  # Technology selection
+│       └── transfer/      # File transfer screen
+├── android/               # Android configuration
+├── ios/                   # iOS configuration
+├── assets/                # App assets
+├── .github/
+│   └── workflows/         # CI/CD pipelines
+├── LICENSE               # GPLv3 License
+├── README.md             # This file
+├── SPEC.md               # Technical specifications
+├── CHANGELOG.md          # Version history
+├── CONTRIBUTING.md       # Contribution guidelines
+└── SECURITY.md           # Security policy
 ```
 
 ---
 
-## 🤝 المساهمة
+## 🏗️ Architecture
 
-نرحب بمساهماتكم! الرجاء قراءة [دليل المساهمة](CONTRIBUTING.md) قبل البدء.
+### State Management
+- **Provider** for reactive state management
+- Clean separation between UI and business logic
+- Centralized app state for transfer progress, errors, and settings
+
+### Services
+- `NetworkService` - Device IP detection, network scanning
+- `HttpServerService` - Local HTTP server for file hosting
+- `FileTransferService` - File sending and receiving logic
+
+### Models
+- `TransferState` - Transfer progress, status, errors
+- `FileInfo` - File metadata (name, size, path)
+- `ConnectionInfo` - Device connection details
 
 ---
 
-## 📄 الترخيص
+## 🤝 Contributing
 
-هذا المشروع مرخص تحت **GNU General Public License v3.0** - راجع [LICENSE](LICENSE) للتفاصيل.
+Contributions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide before submitting pull requests.
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
-## ⚠️免责声明
+## 📄 License
 
-هذا البرنامج يوفر "كما هو" بدون أي ضمانات. استخدامك للبرنامج على مسؤوليتك الخاصة.
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)** — see the [LICENSE](LICENSE) file for details.
+
+### Key Points of GPLv3:
+- ✅ Free to use, modify, and distribute
+- ✅ Source code must be provided
+- ✅ Modifications must be released under GPLv3
+- ✅ No patent litigation allowed
+
+---
+
+## 🔐 Security
+
+Please read our [SECURITY.md](SECURITY.md) for responsible disclosure guidelines and security practices.
+
+---
+
+## 📈 Roadmap
+
+- [ ] File transfer history
+- [ ] Multiple file selection
+- [ ] Transfer queue management
+- [ ] Pause/Resume transfers
+- [ ] Background transfer support
+- [ ] iOS support
+- [ ] Desktop support (Windows/macOS/Linux)
+
+---
+
+## 🐛 Reporting Issues
+
+Found a bug? Please report it via [GitHub Issues](https://github.com/mohmaedeslam00116/hermes-pro-transfer/issues).
+
+For security vulnerabilities, please see [SECURITY.md](SECURITY.md).
+
+---
+
+## 🙏 Acknowledgments
+
+- [Flutter](https://flutter.dev/) - UI framework
+- [Provider](https://pub.dev/packages/provider) - State management
+- [Dio](https://pub.dev/packages/dio) - HTTP client
+- [LocalSend](https://localsend.org/) - Inspiration for local file sharing
 
 ---
 
 <div align="center">
-  <p>صنع بـ ❤️ بواسطة <a href="https://github.com/mohmaedeslam00116">Mohamed Eslam</a></p>
+  <p>Made with ❤️ by <a href="https://github.com/mohmaedeslam00116">Mohamed Eslam</a></p>
   <p>Hermes © 2026</p>
 </div>

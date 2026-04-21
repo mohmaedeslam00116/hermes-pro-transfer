@@ -1,81 +1,85 @@
-# 📋 سجل التغييرات (Changelog)
+# Changelog
 
-جميع التغييرات الملحوظة في هذا المشروع موثقة في هذا الملف.
+All notable changes to the Hermes project will be documented in this file.
 
-التنسيق يعتمد على [Keep a Changelog](https://keepachangelog.com/ar-SA/1.0.0/).
-
----
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v1.0.0-beta.1] - 2026-04-21
 
-### 🆕 المميزات
-- دعم نقل الملفات عبر الشبكة المحلية (LAN)
-- ثلاث تقنيات نقل: HTTP Server, Wi-Fi Direct, WebRTC
-- واجهة مستخدم حديثة بتقنية Glassmorphism
-- دعم الوضع الليلي (Dark Mode)
-- عرض QR Code للاتصال السريع
-- دعم استئناف النقل في حالة انقطاع الاتصال
+### Added
+- **Initial Release** - First public beta release
+- **Three Transfer Technologies**: HTTP Server, Wi-Fi Direct, WebRTC
+- **QR Code Integration**: Easy connection via QR scanning
+- **Dark Mode Support**: Full dark theme implementation
+- **Modern UI**: Glassmorphism design with Teal/Orange color scheme
+- **Onboarding Flow**: First-run permission handling
+- **Dashboard**: Clean main screen with Send/Receive options
+- **Technology Picker**: Visual technology selection cards
+- **Transfer Screen**: Progress tracking and QR code display
+- **CI/CD Pipeline**: Automated builds via GitHub Actions
 
-### 🎨 تحسينات الواجهة
-- تحديث الثيم بألوان Teal + Orange (موافق لتطبيقات Productivity)
-- استخدام خط Plus Jakarta Sans
-- بطاقات ثلاثية الأبعاد مع تأثيرات الظل
-- تحسين شاشة Onboarding
-- تحسين شاشة Dashboard
-- تحسين شاشة اختيار التقنية
+### Technical Details
+- **Min SDK**: 26 (Android 8.0 Oreo)
+- **Compile SDK**: 35
+- **Flutter Version**: 3.24.0
+- **State Management**: Provider
+- **License**: GPLv3
 
-### 🔧 التقنيات
-- Flutter 3.x
-- Android SDK 26+
-- Provider لإدارة الحالة
-- Material Design 3
+### Dependencies
+- `dio: ^5.0.0` - HTTP client
+- `file_picker: ^6.0.0` - File selection
+- `permission_handler: ^11.0.0` - Runtime permissions
+- `network_info_plus: ^5.0.0` - IP detection
+- `qr_flutter: ^4.0.0` - QR generation
+- `mobile_scanner: ^4.0.0` - QR scanning
+- `path_provider: ^2.0.15` - File storage paths
+- `provider: ^6.1.0` - State management
 
-### ⚙️ التغييرات
-- تحديث الترخيص إلى GPLv3
-- تحسين الوثائق (README, CHANGELOG)
-
----
-
-## [v1.0.0-alpha] - 2026-04-01
-
-### 🆕 المميزات (Alpha)
-- إنشاء المشروع الأساسي
-- هيكل التطبيق الأولي
-- دعم HTTP Server للنقل
-- واجهة المستخدم الأساسية
+### Known Issues
+- Wi-Fi Direct requires device support
+- WebRTC may have NAT traversal issues on some networks
 
 ---
 
-## 📌 ملاحظات الإصدارات
+## [Unreleased]
 
-### Beta
-- الإصدار التجريبي للاستخدام العام
-- قد توجد بعض الأخطاء
-- جميع الميزات الأساسية تعمل
-
-###_alpha_
-- إصدار تجريبي مبكر
-- للاختبار الداخلي فقط
-
----
-
-## 🗂️ فئات التغييرات
-
-- `🆕` المميزات الجديدة
-- `🎨` تحسينات الواجهة
-- `🔧` تغييرات تقنية
-- `🐛` إصلاح الأخطاء
-- `⚠️` تحذيرات
+### Planned Features
+- File transfer history
+- Multiple file selection
+- Pause/Resume transfers
+- Transfer queue management
+- Background transfer support
+- iOS support
 
 ---
 
-## 📅 تنسيق التواريخ
+## Release Types
 
-`YYYY-MM-DD` - السنة-الشهر-اليوم
+- **Alpha**: Early development releases
+- **Beta**: Feature-complete, testing needed
+- **RC (Release Candidate)**: Final testing before release
+- **Stable**: Production-ready releases
 
 ---
 
-## 🔗 الروابط
+## How to Update
 
-- الإصدارات: https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases
-- Issues: https://github.com/mohmaedeslam00116/hermes-pro-transfer/issues
+1. Download the latest APK from [Releases](https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases)
+2. Enable "Install from unknown sources" in Android settings
+3. Install the new APK (previous version will be replaced)
+4. Your settings and history will be preserved
+
+---
+
+## Version History
+
+| Version | Date | Type | Status |
+|---------|------|------|--------|
+| v1.0.0-beta.1 | 2026-04-21 | Beta | ✅ Released |
+
+---
+
+<div align="center">
+  <p>Hermes © 2026 | <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer">GitHub Repository</a></p>
+</div>
