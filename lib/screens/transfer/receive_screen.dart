@@ -7,7 +7,6 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
-/// Receive Screen - For receiving files from other devices
 class ReceiveScreen extends StatefulWidget {
   final TransferTechnology technology;
 
@@ -22,23 +21,29 @@ class ReceiveScreen extends StatefulWidget {
 
 class _ReceiveScreenState extends State<ReceiveScreen> {
   final NetworkService _networkService = NetworkService();
-  final MobileScannerController _scannerController = MobileScannerController();
-  final Dio _dio = Dio();
-  
-  bool _isScanning = true;
-  bool _isConnecting = false;
-  bool _isDownloading = false;
+  MobileScannerController? _scannerController;
   bool _isLoading = true;
-  
-  String? _scannedUrl;
+  bool _isDownloading = false;
+  bool _isCompleted = false;
   String? _errorMessage;
+  String? _downloadUrl;
   double _downloadProgress = 0;
-  String _downloadStatus = '';
-  
+  String _downloadSpeed = '0 B/s';
+  int _downloadedFiles = 0;
+  int _totalFiles = 1;
+
   @override
   void initState() {
     super.initState();
+    _initScanner();
     _checkNetwork();
+  }
+
+  void _initScanner() {
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+    );
   }
 
   Future<void> _checkNetwork() async {
@@ -59,112 +64,58 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     }
   }
 
-  void _onDetect(BarcodeCapture capture) {
-    if (_isConnecting || _isDownloading) return;
-    
+  Future<void> _onDetect(BarcodeCapture capture) async {
+    if (_isDownloading || _isCompleted) return;
+
     final List<Barcode> barcodes = capture.barcodes;
     for (final barcode in barcodes) {
       final String? code = barcode.rawValue;
       if (code != null && code.startsWith('http')) {
-        _connectToSender(code);
+        setState(() {
+          _downloadUrl = code;
+          _isDownloading = true;
+        });
+        
+        await _downloadFile(code);
         break;
       }
     }
   }
 
-  Future<void> _connectToSender(String url) async {
-    setState(() {
-      _isScanning = false;
-      _isConnecting = true;
-      _scannedUrl = url;
-    });
-
+  Future<void> _downloadFile(String url) async {
     try {
-      // Try to connect and get file list
-      final response = await _dio.get(
-        '$url?files=true',
-        options: Options(
-          receiveTimeout: const Duration(seconds: 10),
-          followRedirects: true,
-        ),
-      );
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        // Start download
-        await _downloadFiles(url);
-      } else {
-        setState(() {
-          _errorMessage = 'Failed to connect to sender';
-          _isConnecting = false;
-          _isScanning = true;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Connection failed: $e';
-          _isConnecting = false;
-          _isScanning = true;
-        });
-      }
-    }
-  }
-
-  Future<void> _downloadFiles(String url) async {
-    setState(() {
-      _isConnecting = false;
-      _isDownloading = true;
-      _downloadProgress = 0;
-      _downloadStatus = 'Connecting...';
-    });
-
-    try {
+      final dio = Dio();
       final dir = await getExternalStorageDirectory();
-      final downloadDir = Directory('${dir?.path}/Hermes');
-      if (!await downloadDir.exists()) {
-        await downloadDir.create(recursive: true);
+      final savePath = dir?.path ?? '/storage/emulated/0/Download/Hermes';
+      
+      // Create Hermes folder if not exists
+      final saveDir = Directory(savePath);
+      if (!await saveDir.exists()) {
+        await saveDir.create(recursive: true);
       }
 
-      // Get file info
-      _downloadStatus = 'Fetching file list...';
-      setState(() {});
-
-      // Download a test file (for demo)
-      // In production, this would parse the HTML response to get file list
-      final savePath = '${downloadDir.path}/received_file.dat';
-      
-      _downloadStatus = 'Downloading...';
-      setState(() {});
-
-      await _dio.download(
+      await dio.download(
         url,
-        savePath,
+        '$savePath/hermes_file_${DateTime.now().millisecondsSinceEpoch}',
         onReceiveProgress: (received, total) {
           if (!mounted) return;
           if (total != -1) {
             setState(() {
               _downloadProgress = received / total;
+              _downloadSpeed = _formatSpeed(received / 
+                (DateTime.now().millisecondsSinceEpoch / 1000));
             });
           }
         },
       );
 
-      if (!mounted) return;
-
-      setState(() {
-        _downloadStatus = 'Download complete!';
-        _isDownloading = false;
-      });
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('File downloaded successfully!'),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          _isCompleted = true;
+          _downloadedFiles = 1;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -175,21 +126,19 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     }
   }
 
-  void _retry() {
-    setState(() {
-      _isScanning = true;
-      _isConnecting = false;
-      _isDownloading = false;
-      _errorMessage = null;
-      _scannedUrl = null;
-      _downloadProgress = 0;
-    });
+  String _formatSpeed(double bytesPerSecond) {
+    if (bytesPerSecond < 1024) {
+      return '${bytesPerSecond.toStringAsFixed(1)} B/s';
+    } else if (bytesPerSecond < 1024 * 1024) {
+      return '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB/s';
+    } else {
+      return '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB/s';
+    }
   }
 
   @override
   void dispose() {
-    _scannerController.dispose();
-    _dio.close();
+    _scannerController?.dispose();
     super.dispose();
   }
 
@@ -198,258 +147,358 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [AppTheme.darkBackground, AppTheme.darkSurface]
-                : [AppTheme.lightBackground, AppTheme.lightSurface],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // App Bar
-              Padding(
-                padding: const EdgeInsets.all(AppTheme.spacingMD),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back),
-                    ),
-                    const SizedBox(width: AppTheme.spacingSM),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Receive Files',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          Text(
-                            'Scan QR code to connect',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: isDark
-                                      ? AppTheme.darkForeground.withOpacity(0.6)
-                                      : AppTheme.lightForeground.withOpacity(0.6),
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!_isScanning && _errorMessage != null)
-                      IconButton(
-                        onPressed: _retry,
-                        icon: const Icon(Icons.refresh),
-                      ),
-                  ],
-                ),
-              ),
-
-              // Content
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _errorMessage != null && !_isDownloading
-                        ? _buildErrorState(isDark)
-                        : _isScanning
-                            ? _buildScanner(isDark)
-                            : _isConnecting
-                                ? _buildConnecting(isDark)
-                                : _buildDownloading(isDark),
-              ),
-
-              // Footer
-              if (_isScanning)
-                Padding(
-                  padding: const EdgeInsets.all(AppTheme.spacingMD),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppTheme.spacingMD),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: isDark
-                              ? AppTheme.darkForeground.withOpacity(0.6)
-                              : AppTheme.lightForeground.withOpacity(0.6),
-                        ),
-                        const SizedBox(width: AppTheme.spacingMD),
-                        Expanded(
-                          child: Text(
-                            'Point your camera at the QR code displayed on the sender device',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: isDark
-                                      ? AppTheme.darkForeground.withOpacity(0.6)
-                                      : AppTheme.lightForeground.withOpacity(0.6),
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScanner(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(AppTheme.spacingMD),
-      child: Column(
-        children: [
-          // Scanner Preview
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: AppTheme.primaryColor,
-                    width: 3,
-                  ),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                ),
-                child: MobileScanner(
-                  controller: _scannerController,
-                  onDetect: _onDetect,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacingMD),
-          
-          // Manual URL Entry
-          OutlinedButton.icon(
-            onPressed: _showManualEntry,
-            icon: const Icon(Icons.link),
-            label: const Text('Enter URL Manually'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showManualEntry() {
-    final controller = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Enter URL'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'http://192.168.1.100:8080',
-            border: OutlineInputBorder(),
-          ),
-          keyboardType: TextInputType.url,
-        ),
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+      appBar: AppBar(
+        title: const Text('Receive Files'),
+        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+        foregroundColor: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+        elevation: 0,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (controller.text.isNotEmpty) {
-                _connectToSender(controller.text);
-              }
-            },
-            child: const Text('Connect'),
-          ),
+          if (_scannerController != null)
+            IconButton(
+              icon: ValueListenableBuilder(
+                valueListenable: _scannerController!.torchState,
+                builder: (context, state, child) {
+                  return Icon(
+                    state == TorchState.on ? Icons.flash_on : Icons.flash_off,
+                  );
+                },
+              ),
+              onPressed: () => _scannerController?.toggleTorch(),
+            ),
+          if (_scannerController != null)
+            IconButton(
+              icon: const Icon(Icons.flip_camera_android),
+              onPressed: () => _scannerController?.switchCamera(),
+            ),
         ],
       ),
+      body: _buildBody(isDark),
     );
   }
 
-  Widget _buildConnecting(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingLG),
+  Widget _buildBody(bool isDark) {
+    if (_isLoading) {
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const CircularProgressIndicator(),
-            const SizedBox(height: AppTheme.spacingLG),
+            const SizedBox(height: 16),
             Text(
-              'Connecting...',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppTheme.spacingSM),
-            Text(
-              _scannedUrl ?? '',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDark
-                        ? AppTheme.darkForeground.withOpacity(0.6)
-                        : AppTheme.lightForeground.withOpacity(0.6),
-                  ),
+              'Preparing scanner...',
+              style: TextStyle(
+                color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+              ),
             ),
           ],
         ),
-      ),
-    );
+      );
+    }
+
+    if (_isCompleted) {
+      return _buildCompletedView(isDark);
+    }
+
+    if (_isDownloading) {
+      return _buildDownloadingView(isDark);
+    }
+
+    if (_errorMessage != null) {
+      return _buildErrorView(isDark);
+    }
+
+    return _buildScannerView(isDark);
   }
 
-  Widget _buildDownloading(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingLG),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 150,
-              height: 150,
+  Widget _buildScannerView(bool isDark) {
+    return Column(
+      children: [
+        Expanded(
+          flex: 3,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.primaryColor.withValues(alpha: 0.3),
+                    AppTheme.primaryColor.withValues(alpha: 0.1),
+                  ],
+                ),
+              ),
               child: Stack(
-                alignment: Alignment.center,
                 children: [
-                  SizedBox(
-                    width: 150,
-                    height: 150,
-                    child: CircularProgressIndicator(
-                      value: _downloadProgress,
-                      strokeWidth: 8,
-                      backgroundColor: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+                  if (_scannerController != null)
+                    MobileScanner(
+                      controller: _scannerController!,
+                      onDetect: _onDetect,
                     ),
-                  ),
-                  Text(
-                    '${(_downloadProgress * 100).toStringAsFixed(0)}%',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  // Scan overlay
+                  Center(
+                    child: Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: AppTheme.primaryColor,
+                          width: 3,
                         ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Corner decorations
+                          ..._buildCorners(),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: AppTheme.spacingLG),
-            Text(
-              'Downloading Files',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppTheme.spacingSM),
-            Text(
-              _downloadStatus,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDark
-                        ? AppTheme.darkForeground.withOpacity(0.6)
-                        : AppTheme.lightForeground.withOpacity(0.6),
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.qr_code_scanner,
+                  size: 64,
+                  color: AppTheme.primaryColor,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Scan QR Code',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Point camera at sender\'s QR code to start receiving files',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildTechnologyInfo(isDark),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildCorners() {
+    const cornerSize = 30.0;
+    const strokeWidth = 4.0;
+    final color = AppTheme.primaryColor;
+
+    return [
+      // Top left
+      Positioned(
+        top: -2,
+        left: -2,
+        child: Container(
+          width: cornerSize,
+          height: cornerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: color, width: strokeWidth),
+              left: BorderSide(color: color, width: strokeWidth),
+            ),
+          ),
+        ),
+      ),
+      // Top right
+      Positioned(
+        top: -2,
+        right: -2,
+        child: Container(
+          width: cornerSize,
+          height: cornerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: color, width: strokeWidth),
+              right: BorderSide(color: color, width: strokeWidth),
+            ),
+          ),
+        ),
+      ),
+      // Bottom left
+      Positioned(
+        bottom: -2,
+        left: -2,
+        child: Container(
+          width: cornerSize,
+          height: cornerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: color, width: strokeWidth),
+              left: BorderSide(color: color, width: strokeWidth),
+            ),
+          ),
+        ),
+      ),
+      // Bottom right
+      Positioned(
+        bottom: -2,
+        right: -2,
+        child: Container(
+          width: cornerSize,
+          height: cornerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: color, width: strokeWidth),
+              right: BorderSide(color: color, width: strokeWidth),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildTechnologyInfo(bool isDark) {
+    IconData icon;
+    String name;
+    String description;
+
+    switch (widget.technology) {
+      case TransferTechnology.http:
+        icon = Icons.wifi;
+        name = 'HTTP Server';
+        description = 'Fast and reliable transfer via local network';
+        break;
+      case TransferTechnology.wifiDirect:
+        icon = Icons.wifi_direct;
+        name = 'Wi-Fi Direct';
+        description = 'Direct device-to-device connection';
+        break;
+      case TransferTechnology.webrtc:
+        icon = Icons.connection;
+        name = 'WebRTC';
+        description = 'Peer-to-peer secure connection';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppTheme.primaryColor, size: 32),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDownloadingView(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 120,
+              height: 120,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: _downloadProgress,
+                    strokeWidth: 8,
+                    backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+                    valueColor: const AlwaysStoppedAnimation(AppTheme.primaryColor),
+                  ),
+                  Center(
+                    child: Text(
+                      '${(_downloadProgress * 100).toInt()}%',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Downloading...',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Speed: $_downloadSpeed',
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$_downloadedFiles / $_totalFiles files',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+              ),
             ),
           ],
         ),
@@ -457,45 +506,117 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     );
   }
 
-  Widget _buildErrorState(bool isDark) {
+  Widget _buildCompletedView(bool isDark) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingLG),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(AppTheme.spacingLG),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.errorColor.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.error_outline,
-                color: AppTheme.errorColor,
-                size: 48,
+                Icons.check_circle,
+                size: 80,
+                color: Colors.green,
               ),
             ),
-            const SizedBox(height: AppTheme.spacingLG),
+            const SizedBox(height: 32),
             Text(
-              'Connection Failed',
-              style: Theme.of(context).textTheme.titleLarge,
+              'Transfer Complete!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+              ),
             ),
-            const SizedBox(height: AppTheme.spacingSM),
+            const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'An unknown error occurred',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDark
-                        ? AppTheme.darkForeground.withOpacity(0.6)
-                        : AppTheme.lightForeground.withOpacity(0.6),
-                  ),
-              textAlign: TextAlign.center,
+              '$_downloadedFiles files received successfully',
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+              ),
             ),
-            const SizedBox(height: AppTheme.spacingLG),
+            const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: _retry,
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.home),
+              label: const Text('Back to Home'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.errorColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 80,
+                color: AppTheme.errorColor,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Error',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage ?? 'Unknown error occurred',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _errorMessage = null;
+                  _isDownloading = false;
+                });
+              },
               icon: const Icon(Icons.refresh),
               label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
             ),
           ],
         ),
