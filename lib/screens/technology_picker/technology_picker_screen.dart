@@ -2,8 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/app_provider.dart';
+import '../../models/transfer_file.dart';
 import '../../models/transfer_state.dart';
 import '../transfer/transfer_screen.dart';
 
@@ -41,6 +43,8 @@ class TechnologyPickerScreen extends StatefulWidget {
 
 class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
   TransferTechnology? _selectedTechnology;
+  List<TransferFile> _selectedFiles = [];
+  bool _isLoading = false;
 
   static const List<TechnologyOption> _technologies = [
     TechnologyOption(
@@ -87,6 +91,64 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
     });
   }
 
+  Future<void> _pickFiles() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.any,
+      );
+
+      if (result != null) {
+        final files = result.files.map((file) {
+          return TransferFile(
+            name: file.name,
+            path: file.path ?? '',
+            size: file.size,
+            mimeType: _getMimeType(file.extension ?? ''),
+          );
+        }).toList();
+
+        setState(() {
+          _selectedFiles = files;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking files: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _getMimeType(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'pdf':
+        return 'application/pdf';
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'mp4':
+        return 'video/mp4';
+      case 'zip':
+        return 'application/zip';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
   void _startTransfer() {
     if (_selectedTechnology == null) return;
 
@@ -96,7 +158,7 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TransferScreen(
-          files: const [],
+          files: _selectedFiles,
           technology: _selectedTechnology!,
           mode: widget.mode,
         ),
@@ -207,23 +269,55 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                 ),
               ),
 
-              // Bottom Button
+              // Bottom Section
               Padding(
                 padding: const EdgeInsets.all(AppTheme.spacingMD),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed:
-                        _selectedTechnology != null ? _startTransfer : null,
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: AppTheme.spacingSM),
-                      child: Text(
-                        isSend ? 'Select Files & Continue' : 'Continue',
-                        style: const TextStyle(fontSize: 16),
+                child: Column(
+                  children: [
+                    // File Picker Button (for Send mode)
+                    if (isSend && _selectedTechnology != null) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _isLoading ? null : _pickFiles,
+                          icon: _isLoading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.attach_file),
+                          label: Text(
+                            _selectedFiles.isEmpty
+                                ? 'Pick Files to Send'
+                                : '${_selectedFiles.length} file(s) selected',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppTheme.spacingMD),
+                    ],
+
+                    // Continue Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: (_selectedTechnology != null &&
+                                (isSend ? _selectedFiles.isNotEmpty || true : true))
+                            ? _startTransfer
+                            : null,
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: AppTheme.spacingSM),
+                          child: Text(
+                            isSend ? 'Send Files' : 'Continue',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ],
