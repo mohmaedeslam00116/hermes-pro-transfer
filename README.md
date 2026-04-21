@@ -10,18 +10,17 @@
   <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/mohmaedeslam00116/hermes-pro-transfer/build.yml?color=0D9488" alt="Build">
   </a>
-  <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases">
-    <img src="https://img.shields.io/github/downloads/mohmaedeslam00116/hermes-pro-transfer/total?color=0D9488" alt="Downloads">
-  </a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-0D9488?style=for-the-badge&logo=android" alt="Android">
+  <img src="https://img.shields.io/badge/Platform-Linux-0D9488?style=for-the-badge&logo=linux" alt="Linux">
+  <img src="https://img.shields.io/badge/Platform-Windows-0D9488?style=for-the-badge&logo=windows" alt="Windows">
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B?style=for-the-badge&logo=flutter" alt="Flutter">
 </p>
 
 <p align="center">
-  <strong>Hermes</strong> — A fast, secure, and easy-to-use local file transfer application for Android. Share files between devices over your home network without internet or Bluetooth.
+  <strong>Hermes</strong> — A fast, secure, and easy-to-use local file transfer application. Share files between devices over your home network without internet or Bluetooth.
 </p>
 
 ---
@@ -31,7 +30,8 @@
 | Feature | Description |
 |---------|-------------|
 | 🚀 **High Speed Transfer** | Transfer files over Wi-Fi at maximum speed |
-| 📱 **Easy to Use** | Simple and intuitive user interface |
+| 📱 **Multi-Platform** | Android, Linux, and Windows support |
+| 💻 **Desktop Ready** | Full desktop application with drag-and-drop |
 | 🔒 **Secure** | End-to-end encryption via HTTPS |
 | 🌙 **Dark Mode** | Comfortable dark theme for night use |
 | 📲 **QR Code** | Quick connection via QR code scanning |
@@ -41,13 +41,94 @@
 
 ---
 
-## 📸 Screenshots
+## 📥 Downloads
 
-<p align="center">
-  <img src="https://via.placeholder.com/300x600/0D9488/FFFFFF?text=Dashboard" width="150" alt="Dashboard">
-  <img src="https://via.placeholder.com/300x600/14B8A6/FFFFFF?text=Send" width="150" alt="Send">
-  <img src="https://via.placeholder.com/300x600/EA580C/FFFFFF?text=Receive" width="150" alt="Receive">
-</p>
+### Latest Release
+
+| Platform | File | Status |
+|----------|------|--------|
+| Android | Release APK | ✅ Available in Actions Artifacts |
+| Android | Debug APK | ✅ Available in Actions Artifacts |
+| Linux | Desktop Bundle | ✅ Available in Actions Artifacts |
+| Windows | Desktop Bundle | ✅ Available in Actions Artifacts |
+
+### Quick Download
+Download from the [Actions](https://github.com/mohmaedeslam00116/hermes-pro-transfer/actions) tab:
+1. Go to latest workflow run
+2. Find your platform under "Artifacts"
+3. Download the artifact
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Flutter SDK 3.27.0 or higher
+- Android SDK 26+ (Android 8.0 Oreo)
+- Android device with Wi-Fi capability
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/mohmaedeslam00116/hermes-pro-transfer.git
+cd hermes-pro-transfer
+
+# Install dependencies
+flutter pub get
+
+# Build Android APK
+flutter build apk --release
+
+# Build Linux Desktop
+flutter config --enable-linux-desktop
+flutter build linux --release
+
+# Build Windows Desktop
+flutter config --enable-windows-desktop
+flutter build windows --release
+```
+
+### Running the App
+
+```bash
+# Debug build
+flutter run
+
+# Release build
+flutter build apk --release
+```
+
+---
+
+## 📁 Project Structure
+
+```
+hermes-pro-transfer/
+├── lib/
+│   ├── core/
+│   │   ├── constants/     # App constants
+│   │   └── theme/         # Theme definitions
+│   ├── desktop/           # Desktop application
+│   │   ├── screens/       # Desktop UI screens
+│   │   ├── services/      # Desktop services
+│   │   └── widgets/       # Desktop widgets
+│   ├── models/            # Data models
+│   ├── providers/         # State management
+│   ├── services/          # Network services
+│   └── screens/           # Mobile UI screens
+├── android/               # Android configuration
+├── ios/                   # iOS configuration
+├── linux/                 # Linux configuration
+├── windows/               # Windows configuration
+├── assets/                # App assets
+├── test/                  # Unit and widget tests
+├── .github/
+│   └── workflows/         # CI/CD pipelines
+├── LICENSE               # GPLv3 License
+├── README.md             # This file
+└── CHANGELOG.md          # Version history
+```
 
 ---
 
@@ -73,80 +154,6 @@
 
 ---
 
-## 📥 Download
-
-### Latest Release (v1.0.0-beta.1)
-
-| File | Size | Download |
-|------|-------|----------|
-| Release APK | 102.5 MB | [Download](https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases/download/v1.0.0-beta.1/hermes-v1.0.0-beta.1-release.apk) |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Flutter SDK 3.24.0 or higher
-- Android SDK 26+ (Android 8.0 Oreo)
-- Android device with Wi-Fi capability
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/mohmaedeslam00116/hermes-pro-transfer.git
-cd hermes-pro-transfer
-
-# Install dependencies
-flutter pub get
-
-# Build APK
-flutter build apk --release
-```
-
-### Running the App
-
-```bash
-# Debug build
-flutter run
-
-# Release build
-flutter build apk --release
-```
-
----
-
-## 📁 Project Structure
-
-```
-hermes-pro-transfer/
-├── lib/
-│   ├── core/
-│   │   ├── constants/     # App constants and configurations
-│   │   └── theme/         # Theme and color definitions
-│   ├── models/            # Data models
-│   ├── providers/         # State management (Provider)
-│   ├── services/          # Network and transfer services
-│   └── screens/          # UI screens
-│       ├── onboarding/    # First-run onboarding
-│       ├── dashboard/     # Main dashboard
-│       ├── technology_picker/  # Technology selection
-│       └── transfer/      # File transfer screen
-├── android/               # Android configuration
-├── ios/                   # iOS configuration
-├── assets/                # App assets
-├── .github/
-│   └── workflows/         # CI/CD pipelines
-├── LICENSE               # GPLv3 License
-├── README.md             # This file
-├── SPEC.md               # Technical specifications
-├── CHANGELOG.md          # Version history
-├── CONTRIBUTING.md       # Contribution guidelines
-└── SECURITY.md           # Security policy
-```
-
----
-
 ## 🏗️ Architecture
 
 ### State Management
@@ -158,11 +165,33 @@ hermes-pro-transfer/
 - `NetworkService` - Device IP detection, network scanning
 - `HttpServerService` - Local HTTP server for file hosting
 - `FileTransferService` - File sending and receiving logic
+- `DesktopHttpServer` - Shelf-based HTTP server for desktop
 
 ### Models
 - `TransferState` - Transfer progress, status, errors
-- `FileInfo` - File metadata (name, size, path)
-- `ConnectionInfo` - Device connection details
+- `TransferFile` - File metadata (name, size, path)
+- `TransferTechnology` - Technology enum (HTTP, WiFiDirect, WebRTC)
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+flutter test
+
+# Run unit tests
+flutter test test/unit/
+
+# Run widget tests
+flutter test test/widget/
+```
+
+### Test Coverage
+- ✅ 36 tests (unit + widget)
+- ✅ Transfer state tests
+- ✅ Provider tests
+- ✅ Widget tests
 
 ---
 
@@ -176,6 +205,7 @@ Contributions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) gu
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+6. CI/CD will automatically build and test your changes
 
 ---
 
@@ -199,13 +229,15 @@ Please read our [SECURITY.md](SECURITY.md) for responsible disclosure guidelines
 
 ## 📈 Roadmap
 
+- [x] Android APK support
+- [x] Linux Desktop support
+- [x] Windows Desktop support
+- [ ] macOS Desktop support
 - [ ] File transfer history
 - [ ] Multiple file selection
-- [ ] Transfer queue management
 - [ ] Pause/Resume transfers
 - [ ] Background transfer support
 - [ ] iOS support
-- [ ] Desktop support (Windows/macOS/Linux)
 
 ---
 
@@ -223,6 +255,7 @@ For security vulnerabilities, please see [SECURITY.md](SECURITY.md).
 - [Provider](https://pub.dev/packages/provider) - State management
 - [Dio](https://pub.dev/packages/dio) - HTTP client
 - [LocalSend](https://localsend.org/) - Inspiration for local file sharing
+- [Shelf](https://pub.dev/packages/shelf) - Desktop HTTP server
 
 ---
 

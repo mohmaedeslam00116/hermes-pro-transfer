@@ -5,6 +5,52 @@ All notable changes to the Hermes project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0-desktop] - 2026-04-21
+
+### Added
+- **Desktop Support** - Linux and Windows desktop builds
+- **Hermes Desktop** - Full desktop application with drag-and-drop
+- **CI/CD Desktop Builds** - Automated Linux and Windows builds
+- **Modern Desktop UI** - Professional glassmorphism design
+
+### Desktop Features
+- Linux Desktop Bundle (23 MB)
+- Windows Desktop Bundle
+- Desktop HTTP Server using Shelf
+- Drag-and-drop file selection
+- Network IP detection
+
+---
+
+## [v1.0.0-beta.3] - 2026-04-21
+
+### Added
+- **CI/CD Pipeline** - Full GitHub Actions automation
+- **36 Unit Tests** - Comprehensive test coverage
+- **Analysis Options** - Strict code quality enforcement
+
+### CI/CD Jobs
+- Flutter Analyze ✅
+- Flutter Test ✅ (28 tests)
+- Build Linux Desktop ✅
+- Build Windows Desktop ✅
+- Build Debug APK ✅
+- Build Release APK ✅
+
+---
+
+## [v1.0.0-beta.2] - 2026-04-21
+
+### Added
+- **Desktop Application** - lib/desktop/ module
+- **DesktopTheme** - Custom desktop theming
+- **DesktopHttpServer** - Shelf-based HTTP server
+- **DesktopShell** - Main desktop interface
+- **SendScreen** - Desktop file sending
+- **ReceiveScreen** - Desktop file receiving
+
+---
+
 ## [v1.0.0-beta.1] - 2026-04-21
 
 ### Added
@@ -17,12 +63,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dashboard**: Clean main screen with Send/Receive options
 - **Technology Picker**: Visual technology selection cards
 - **Transfer Screen**: Progress tracking and QR code display
-- **CI/CD Pipeline**: Automated builds via GitHub Actions
 
 ### Technical Details
 - **Min SDK**: 26 (Android 8.0 Oreo)
 - **Compile SDK**: 35
-- **Flutter Version**: 3.24.0
+- **Flutter Version**: 3.27.0
 - **State Management**: Provider
 - **License**: GPLv3
 
@@ -35,6 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `mobile_scanner: ^4.0.0` - QR scanning
 - `path_provider: ^2.0.15` - File storage paths
 - `provider: ^6.1.0` - State management
+- `shelf: ^1.4.1` - Desktop HTTP server
+- `window_manager: ^0.3.9` - Desktop window control
+- `desktop_drop: ^0.4.4` - Drag and drop support
 
 ### Known Issues
 - Wi-Fi Direct requires device support
@@ -42,40 +90,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
-### Planned Features
-- File transfer history
-- Multiple file selection
-- Pause/Resume transfers
-- Transfer queue management
-- Background transfer support
-- iOS support
-
----
-
-## Release Types
-
-- **Alpha**: Early development releases
-- **Beta**: Feature-complete, testing needed
-- **RC (Release Candidate)**: Final testing before release
-- **Stable**: Production-ready releases
-
----
-
-## How to Update
-
-1. Download the latest APK from [Releases](https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases)
-2. Enable "Install from unknown sources" in Android settings
-3. Install the new APK (previous version will be replaced)
-4. Your settings and history will be preserved
-
----
-
 ## Version History
 
 | Version | Date | Type | Status |
 |---------|------|------|--------|
+| v1.0.0-desktop | 2026-04-21 | Beta | ✅ Released |
+| v1.0.0-beta.3 | 2026-04-21 | Beta | ✅ Released |
+| v1.0.0-beta.2 | 2026-04-21 | Beta | ✅ Released |
 | v1.0.0-beta.1 | 2026-04-21 | Beta | ✅ Released |
 
 ---
