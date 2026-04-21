@@ -15,9 +15,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.7'
           channel: 'stable'
-          cache: true
-          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
         run: flutter pub get
@@ -34,9 +33,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.7'
           channel: 'stable'
-          cache: true
-          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
         run: flutter pub get
@@ -53,9 +51,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.7'
           channel: 'stable'
-          cache: true
-          cache-dependency-path: 'pubspec.lock'
 
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
@@ -82,9 +79,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.7'
           channel: 'stable'
-          cache: true
-          cache-dependency-path: 'pubspec.lock'
 
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
@@ -111,9 +107,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.7'
           channel: 'stable'
-          cache: true
-          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
         run: flutter pub get
@@ -138,9 +133,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.7'
           channel: 'stable'
-          cache: true
-          cache-dependency-path: 'pubspec.lock'
 
       - name: Get dependencies
         run: flutter pub get
