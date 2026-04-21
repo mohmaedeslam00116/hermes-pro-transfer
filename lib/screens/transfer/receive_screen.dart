@@ -25,6 +25,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   bool _isLoading = true;
   bool _isDownloading = false;
   bool _isCompleted = false;
+  bool _torchEnabled = false;
   String? _errorMessage;
   String? _downloadUrl;
   double _downloadProgress = 0;
@@ -43,6 +44,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _scannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
       facing: CameraFacing.back,
+      torchEnabled: false,
     );
   }
 
@@ -102,8 +104,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           if (total != -1) {
             setState(() {
               _downloadProgress = received / total;
-              _downloadSpeed = _formatSpeed(received / 
-                (DateTime.now().millisecondsSinceEpoch / 1000));
             });
           }
         },
@@ -126,14 +126,11 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     }
   }
 
-  String _formatSpeed(double bytesPerSecond) {
-    if (bytesPerSecond < 1024) {
-      return '${bytesPerSecond.toStringAsFixed(1)} B/s';
-    } else if (bytesPerSecond < 1024 * 1024) {
-      return '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB/s';
-    } else {
-      return '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB/s';
-    }
+  void _toggleTorch() async {
+    await _scannerController?.toggleTorch();
+    setState(() {
+      _torchEnabled = !_torchEnabled;
+    });
   }
 
   @override
@@ -154,23 +151,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         foregroundColor: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
         elevation: 0,
         actions: [
-          if (_scannerController != null)
-            IconButton(
-              icon: ValueListenableBuilder(
-                valueListenable: _scannerController!.torchState,
-                builder: (context, state, child) {
-                  return Icon(
-                    state == TorchState.on ? Icons.flash_on : Icons.flash_off,
-                  );
-                },
-              ),
-              onPressed: () => _scannerController?.toggleTorch(),
-            ),
-          if (_scannerController != null)
-            IconButton(
-              icon: const Icon(Icons.flip_camera_android),
-              onPressed: () => _scannerController?.switchCamera(),
-            ),
+          IconButton(
+            icon: Icon(_torchEnabled ? Icons.flash_on : Icons.flash_off),
+            onPressed: _toggleTorch,
+          ),
+          IconButton(
+            icon: const Icon(Icons.flip_camera_android),
+            onPressed: () => _scannerController?.switchCamera(),
+          ),
         ],
       ),
       body: _buildBody(isDark),
@@ -227,8 +215,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppTheme.primaryColor.withValues(alpha: 0.3),
-                    AppTheme.primaryColor.withValues(alpha: 0.1),
+                    AppTheme.primaryColor.withOpacity(0.3),
+                    AppTheme.primaryColor.withOpacity(0.1),
                   ],
                 ),
               ),
@@ -239,7 +227,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                       controller: _scannerController!,
                       onDetect: _onDetect,
                     ),
-                  // Scan overlay
                   Center(
                     child: Container(
                       width: 250,
@@ -252,10 +239,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Stack(
-                        children: [
-                          // Corner decorations
-                          ..._buildCorners(),
-                        ],
+                        children: _buildCorners(),
                       ),
                     ),
                   ),
@@ -310,7 +294,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final color = AppTheme.primaryColor;
 
     return [
-      // Top left
       Positioned(
         top: -2,
         left: -2,
@@ -325,7 +308,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           ),
         ),
       ),
-      // Top right
       Positioned(
         top: -2,
         right: -2,
@@ -340,7 +322,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           ),
         ),
       ),
-      // Bottom left
       Positioned(
         bottom: -2,
         left: -2,
@@ -355,7 +336,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           ),
         ),
       ),
-      // Bottom right
       Positioned(
         bottom: -2,
         right: -2,
@@ -385,12 +365,12 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         description = 'Fast and reliable transfer via local network';
         break;
       case TransferTechnology.wifiDirect:
-        icon = Icons.wifi_direct;
+        icon = Icons.wifi;
         name = 'Wi-Fi Direct';
         description = 'Direct device-to-device connection';
         break;
       case TransferTechnology.webrtc:
-        icon = Icons.connection;
+        icon = Icons.link;
         name = 'WebRTC';
         description = 'Peer-to-peer secure connection';
         break;
@@ -410,7 +390,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              color: AppTheme.primaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: AppTheme.primaryColor, size: 32),
@@ -516,7 +496,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
+                color: Colors.green.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -572,7 +552,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.errorColor.withValues(alpha: 0.1),
+                color: AppTheme.errorColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
