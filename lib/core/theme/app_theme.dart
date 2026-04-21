@@ -76,7 +76,7 @@ class AppTheme {
       ),
       
       // Cards - Modern with subtle border
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: lightSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -321,7 +321,7 @@ class AppTheme {
       ),
       
       // Cards
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(

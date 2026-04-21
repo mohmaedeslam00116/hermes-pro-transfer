@@ -23,9 +23,8 @@ class _SendScreenState extends State<SendScreen> {
   bool _isDragging = false;
   String? _localIp;
   String? _downloadUrl;
+  // ignore: unused_field
   int _connectedDevices = 0;
-
-  @override
   void initState() {
     super.initState();
     _localIp = NetworkInfoService.getLocalIpSync();

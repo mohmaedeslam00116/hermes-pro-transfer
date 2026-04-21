@@ -30,7 +30,7 @@ class DesktopTheme {
         onSurface: textPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: cardColor,
         elevation: 0,
         shape: RoundedRectangleBorder(

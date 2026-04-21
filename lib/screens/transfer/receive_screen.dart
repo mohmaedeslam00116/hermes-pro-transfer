@@ -29,9 +29,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   String? _errorMessage;
   String? _downloadUrl;
   double _downloadProgress = 0;
-  String _downloadSpeed = '0 B/s';
+  final String _downloadSpeed = '0 B/s';
   int _downloadedFiles = 0;
-  int _totalFiles = 1;
+  int get _totalFiles => 1;
 
   @override
   void initState() {
