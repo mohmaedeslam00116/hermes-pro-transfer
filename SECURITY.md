@@ -1,39 +1,61 @@
-# Security Policy
+# 🔒 سياسة الأمان
 
-## Supported Versions
+## الإبلاغ عن الثغرات
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+إذا وجدت ثغرة أمنية في Hermes، يرجى الإبلاغ عنها فوراً.
 
-## Reporting a Vulnerability
+### طرق الإبلاغ
 
-If you discover a security vulnerability within Hermes, please report it responsibly.
+1. **GitHub Issues** - أنشئ issue جديد مع تصنيف `security`
+2. **البريد الإلكتروني** - راجع ملف LICENSE للبيانات الشخصية
 
-**Please do NOT create a public GitHub issue for security vulnerabilities.**
+### ما يجب تضمينه
 
-Instead, please report it via one of the following:
+- وصف الثغرة
+- الخطوات لإعادة إنتاجها
+- التأثير المحتمل
+- اقتراحات الإصلاح (اختياري)
 
-1. **Email**: Send an email to the maintainers (if available)
-2. **Private Security Advisory**: Use GitHub's [Private vulnerability reporting](https://github.com/mohmaedeslam00116/hermes-pro-transfer/security/advisories/new)
+###承诺
 
-## Disclosure Timeline
+-，我们会尽快回复所有安全问题报告
+- 我们将在修复后公开披露漏洞
+- 我们不会对安全研究人员采取法律行动
 
-- **Initial Report**: We will acknowledge receipt within 24 hours
-- **Initial Response**: We aim to provide an initial response within 48 hours
-- **Resolution**: We will work to resolve critical issues as quickly as possible
+---
 
-## Security Best Practices
+## 🔐 نموذج الأمان
 
-When using Hermes:
-- Only transfer files with trusted devices on your local network
-- Be cautious of QR codes from unknown sources
-- Keep your app updated to the latest version
+### جمع البيانات
 
-## Local Network Security
+Hermes لا يجمع أي بيانات شخصية. التطبيق يعمل بالكامل محلياً.
 
-Hermes transfers files over your local network only. Please ensure:
-- You're on a trusted network
-- Other connected devices are secure
-- You don't share sensitive credentials via file transfer
+### صلاحيات التطبيق
+
+| الصلاحية | الغرض |
+|---------|-------|
+| `Storage` | قراءة/كتابة الملفات للنقل |
+| `Camera` | مسح QR Code |
+| `Location` | الحصول على عنوان IP المحلي |
+| `Wi-Fi` | الاتصال بالشبكة المحلية |
+
+### التشفير
+
+- HTTPS للاتصال بالخادم
+- WebRTC مشفر تلقائياً
+
+---
+
+## 🚨 معلومات مهمة
+
+- هذا التطبيق لنقل الملفات على مسؤوليتك الخاصة
+- تأكد من استخدام التطبيق على شبكات موثوقة
+- لا تنقل ملفات حساسة دون تشفير إضافي
+
+---
+
+## 📅 سجل التحديثات
+
+| التاريخ | التغيير |
+|---------|--------|
+| 2026-04-21 | إنشاء سياسة الأمان |

@@ -1,95 +1,154 @@
-# Contributing to Hermes
+# 🤝 دليل المساهمة
 
-Thank you for your interest in contributing to Hermes! 
+شكراً لاهتمامك بالمساهمة في Hermes!
 
-## Development Setup
+---
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/mohmaedeslam00116/hermes-pro-transfer.git
-   cd hermes-pro-transfer
-   ```
+## 📋 قبل البدء
 
-2. **Navigate to project directory**
-   ```bash
-   cd hermes_pro
-   ```
+1. اقرأ هذا الدليل بالكامل
+2. اطلع على [LICENSE](LICENSE) - GPLv3
+3. راجع [SECURITY.md](SECURITY.md) لإرشادات الأمان
 
-3. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
+---
 
-4. **Run the app**
-   ```bash
-   flutter run
-   ```
+## 🚀 كيف المساهمة
 
-5. **Build debug APK**
-   ```bash
-   flutter build apk --debug
-   ```
+### 1. الإبلاغ عن الأخطاء
 
-## Code Style
+أنشئ Issue جديد مع:
+- `bug` label
+- وصف مفصل للمشكلة
+- خطوات لإعادة الإنتاج
+- لقطات شاشة (إن أمكن)
 
-- Follow [Dart style guide](https://dart.dev/guides/language/effective-dart)
-- Use `flutter analyze` before committing
-- Keep code clean and well-documented
+### 2. طلب الميزات
 
-## Branch Structure
+أنشئ Issue جديد مع:
+- `feature` label
+- وصف الميزة المطلوبة
+- لماذا هذه الميزة مفيدة
+- بدائل مقترحة (إن وجدت)
 
-- `main` - Stable releases
-- `develop` - Development (future)
-- `feature/*` - New features
-- `fix/*` - Bug fixes
+### 3. إرسال Pull Request
 
-## Pull Request Process
+#### الخطوات
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and analysis (`flutter analyze`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-## Commit Message Format
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
+1. **Fork** المشروع
+2. **Clone** نسختك المحلية:
+```bash
+git clone https://github.com/YOUR_USERNAME/hermes-pro-transfer.git
 ```
 
-### Types
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation
-- `style`: Code style
-- `refactor`: Code refactoring
-- `test`: Testing
-- `chore`: Maintenance
+3. **Branch** فرع جديد:
+```bash
+git checkout -b feature/your-feature-name
+```
 
-## Reporting Bugs
+4. **Commit** التغييرات مع رسائل واضحة:
+```bash
+git commit -m "إضافة: وصف التغيير"
+```
 
-Please report bugs using [GitHub Issues](https://github.com/mohmaedeslam00116/hermes-pro-transfer/issues).
+5. **Push** إلى GitHub:
+```bash
+git push origin feature/your-feature-name
+```
 
-Include:
-- Flutter version
-- Android version
-- Steps to reproduce
-- Expected vs actual behavior
-- Error logs if applicable
+6. **إنشاء Pull Request** على GitHub
 
-## Feature Requests
+---
 
-We welcome feature requests! Please open an issue with:
-- Clear description of the feature
-- Use case explanation
-- Any mockups or examples if available
+## 📏 معايير الكود
 
-## License
+### التنسيق
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+- استخدم `flutter analyze` قبل Commit
+- اتبع تنسيق Dart القياسي
+- استخدم `dartfmt` للتنسيق التلقائي
+
+### الترتيب
+
+```dart
+// 1. الحزم ( packages )
+import 'package:flutter/material.dart';
+
+// 2. الحزم المحلية
+import '../models/file.dart';
+
+// 3. الملفات النسبية
+import 'file.dart';
+```
+
+### التسمية
+
+- `camelCase` للمتغيرات والدوال
+- `PascalCase` لل Classes و Enums
+- `snake_case` للملفات
+
+### التعليقات
+
+- تعليق Dartdoc لل Classes والدوال العامة
+- // للتعليقات السردية
+
+---
+
+## 🧪 اختبار
+
+- اختبر تغييراتك على أجهزة حقيقية
+- اختبر على Android 8.0+ (API 26+)
+- اختبر الوضعين: Light و Dark
+
+---
+
+## 📝 قوالب الرسائل
+
+### Commit Messages
+
+```
+<type>: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+#### Types
+
+| Type | الوصف |
+|------|-------|
+| `🆕` | ميزة جديدة |
+| `🎨` | تحسين واجهة |
+| `🔧` | تحسين كود |
+| `🐛` | إصلاح خطأ |
+| `📝` | وثائق |
+| `⚙️` | إعدادات |
+| `♻️` | إعادة تشكيل |
+
+---
+
+## ❌ ما لا نسمح به
+
+- 🚫 إزعاج أو مضايقة
+- 🚫 محتوى غير لائق
+- 🚫 سرقة هوية
+- 🚫 انتهاك الخصوصية
+- 🚫 استخدام للأغراض الخبيثة
+
+---
+
+## 💬 التواصل
+
+- GitHub Discussions للأسئلة العامة
+- Issues للأخطاء والميزات
+- لا ترسل بريد إلكتروني غير مطلوب
+
+---
+
+## 📜 الترخيص
+
+بإرسالك Pull Request، أنت توافق على ترخيص مساهمتك تحت [GPLv3](LICENSE).
+
+---
+
+شكراً لك على مساعدتك في جعل Hermes أفضل! 🌟

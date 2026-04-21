@@ -1,12 +1,35 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import '../../models/transfer_file.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
+import '../../providers/app_provider.dart';
 import '../../models/transfer_state.dart';
 import '../transfer/transfer_screen.dart';
 
+/// Technology Option Data
+class TechnologyOption {
+  final TransferTechnology technology;
+  final IconData icon;
+  final String title;
+  final String description;
+  final Color color;
+  final List<String> features;
+
+  const TechnologyOption({
+    required this.technology,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.color,
+    required this.features,
+  });
+}
+
+/// Modern Technology Picker Screen
 class TechnologyPickerScreen extends StatefulWidget {
   final TransferMode mode;
-  
+
   const TechnologyPickerScreen({
     super.key,
     required this.mode,
@@ -18,291 +41,333 @@ class TechnologyPickerScreen extends StatefulWidget {
 
 class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
   TransferTechnology? _selectedTechnology;
-  List<TransferFile> _selectedFiles = [];
-  bool _isLoading = false;
+
+  static const List<TechnologyOption> _technologies = [
+    TechnologyOption(
+      technology: TransferTechnology.http,
+      icon: Icons.language,
+      title: 'HTTP Server',
+      description: 'Simple and reliable. Works on any Wi-Fi network.',
+      color: AppTheme.primaryColor,
+      features: [
+        '✓ Works everywhere',
+        '✓ No configuration',
+        '✓ Cross-platform',
+      ],
+    ),
+    TechnologyOption(
+      technology: TransferTechnology.wifiDirect,
+      icon: Icons.wifi_tethering,
+      title: 'Wi-Fi Direct',
+      description: 'Direct connection between nearby devices.',
+      color: AppTheme.secondaryColor,
+      features: [
+        '✓ Peer-to-peer',
+        '✓ No router needed',
+        '✓ Fast speeds',
+      ],
+    ),
+    TechnologyOption(
+      technology: TransferTechnology.webrtc,
+      icon: Icons.cast_connected,
+      title: 'WebRTC',
+      description: 'Modern P2P with low latency and encryption.',
+      color: AppTheme.accentColor,
+      features: [
+        '✓ Low latency',
+        '✓ Secure P2P',
+        '✓ Adaptive',
+      ],
+    ),
+  ];
+
+  void _selectTechnology(TechnologyOption option) {
+    setState(() {
+      _selectedTechnology = option.technology;
+    });
+  }
+
+  void _startTransfer() {
+    if (_selectedTechnology == null) return;
+
+    final appProvider = context.read<AppProvider>();
+    appProvider.setTechnology(_selectedTechnology!);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TransferScreen(
+          files: const [],
+          technology: _selectedTechnology!,
+          mode: widget.mode,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSend = widget.mode == TransferMode.send;
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isSend ? 'Send Files' : 'Receive Files'),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [
+                    AppTheme.darkBackground,
+                    AppTheme.darkSurface,
+                  ]
+                : [
+                    AppTheme.lightBackground,
+                    AppTheme.lightSurface,
+                  ],
+          ),
+        ),
+        child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Choose Transfer Technology',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Select how you want to transfer your files',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: ListView(
+              // App Bar
+              Padding(
+                padding: const EdgeInsets.all(AppTheme.spacingMD),
+                child: Row(
                   children: [
-                    _buildTechnologyCard(
-                      technology: TransferTechnology.http,
-                      icon: Icons.http,
-                      title: 'HTTP Server',
-                      description: 'Simple and reliable. Works on any network.',
-                      color: const Color(0xFF1565C0),
-                      features: const [
-                        'Works everywhere',
-                        'No configuration needed',
-                        'Cross-platform support',
-                      ],
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back),
                     ),
-                    const SizedBox(height: 12),
-                    _buildTechnologyCard(
-                      technology: TransferTechnology.wifiDirect,
-                      icon: Icons.wifi_tethering,
-                      title: 'Wi-Fi Direct',
-                      description: 'Peer-to-peer connection without router.',
-                      color: const Color(0xFF00BFA5),
-                      features: const [
-                        'Direct device-to-device',
-                        'No internet needed',
-                        'Very fast speeds',
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTechnologyCard(
-                      technology: TransferTechnology.webrtc,
-                      icon: Icons.cast,
-                      title: 'WebRTC',
-                      description: 'Modern P2P technology with low latency.',
-                      color: const Color(0xFFE53935),
-                      features: const [
-                        'Low latency',
-                        'Secure encryption',
-                        'Adaptive routing',
-                      ],
+                    const SizedBox(width: AppTheme.spacingSM),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSend ? 'Send Files' : 'Receive Files',
+                            style:
+                                Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                          ),
+                          Text(
+                            isSend ? 'Select files to share' : 'Connect to sender',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: isDark
+                                          ? AppTheme.darkForeground
+                                              .withOpacity(0.6)
+                                          : AppTheme.lightForeground
+                                              .withOpacity(0.6),
+                                    ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              if (isSend) ...[
-                _buildFileSelector(),
-                const SizedBox(height: 16),
-              ],
-              ElevatedButton(
-                onPressed: _selectedTechnology != null && (isSend ? _selectedFiles.isNotEmpty : true)
-                    ? () => _startTransfer()
-                    : null,
-                child: Text(isSend ? 'Start Sending' : 'Start Receiving'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildTechnologyCard({
-    required TransferTechnology technology,
-    required IconData icon,
-    required String title,
-    required String description,
-    required Color color,
-    required List<String> features,
-  }) {
-    final isSelected = _selectedTechnology == technology;
-    
-    return Card(
-      color: isSelected ? color.withOpacity(0.1) : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isSelected ? color : Colors.transparent,
-          width: 2,
-        ),
-      ),
-      child: InkWell(
-        onTap: () {
-          setState(() => _selectedTechnology = technology);
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color),
-              ),
-              const SizedBox(width: 16),
+
+              // Content
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: features.map((f) => Chip(
-                        label: Text(f, style: const TextStyle(fontSize: 10)),
-                        padding: EdgeInsets.zero,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      )).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              Radio<TransferTechnology>(
-                value: technology,
-                groupValue: _selectedTechnology,
-                onChanged: (value) {
-                  setState(() => _selectedTechnology = value);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildFileSelector() {
-    return Card(
-      child: InkWell(
-        onTap: _pickFiles,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1565C0).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.attach_file,
-                  color: Color(0xFF1565C0),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _selectedFiles.isEmpty
-                          ? 'Select Files'
-                          : '${_selectedFiles.length} file(s) selected',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (_selectedFiles.isNotEmpty)
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppTheme.spacingMD),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
                       Text(
-                        _selectedFiles
-                            .map((f) => f.name)
-                            .take(3)
-                            .join(', ') +
-                            (_selectedFiles.length > 3
-                                ? ' +${_selectedFiles.length - 3}'
-                                : ''),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
+                        'Choose Transfer Method',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: AppTheme.spacingSM),
+                      Text(
+                        'Select how you want to transfer your files',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: isDark
+                                  ? AppTheme.darkForeground.withOpacity(0.6)
+                                  : AppTheme.lightForeground
+                                      .withOpacity(0.6),
+                            ),
+                      ),
+                      const SizedBox(height: AppTheme.spacingLG),
+
+                      // Technology Cards
+                      ..._technologies.map(
+                        (tech) => Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: AppTheme.spacingMD,
+                          ),
+                          child: _buildTechnologyCard(tech, isDark),
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              const Icon(Icons.chevron_right),
+
+              // Bottom Button
+              Padding(
+                padding: const EdgeInsets.all(AppTheme.spacingMD),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed:
+                        _selectedTechnology != null ? _startTransfer : null,
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppTheme.spacingSM),
+                      child: Text(
+                        isSend ? 'Select Files & Continue' : 'Continue',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
-  
-  Future<void> _pickFiles() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-        type: FileType.any,
-      );
-      
-      if (result != null) {
-        setState(() {
-          _selectedFiles = result.files.map((file) {
-            return TransferFile(
-              name: file.name,
-              path: file.path ?? '',
-              size: file.size,
-              mimeType: _getMimeType(file.name),
-            );
-          }).toList();
-        });
-      }
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-  
-  String _getMimeType(String fileName) {
-    final ext = fileName.split('.').last.toLowerCase();
-    final mimeTypes = {
-      'pdf': 'application/pdf',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'mp4': 'video/mp4',
-      'mp3': 'audio/mpeg',
-      'zip': 'application/zip',
-      'doc': 'application/msword',
-      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    };
-    return mimeTypes[ext] ?? 'application/octet-stream';
-  }
-  
-  void _startTransfer() {
-    if (widget.mode == TransferMode.send) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => TransferScreen(
-            files: _selectedFiles,
-            technology: _selectedTechnology ?? TransferTechnology.http,
+
+  Widget _buildTechnologyCard(TechnologyOption option, bool isDark) {
+    final isSelected = _selectedTechnology == option.technology;
+
+    return GestureDetector(
+      onTap: () => _selectTechnology(option),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? option.color.withOpacity(isDark ? 0.2 : 0.15)
+              : isDark
+                  ? AppTheme.darkSurface
+                  : AppTheme.lightSurface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          border: Border.all(
+            color: isSelected
+                ? option.color
+                : isDark
+                    ? AppTheme.darkBorder.withOpacity(0.3)
+                    : AppTheme.lightBorder,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: option.color.withOpacity(0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingMD),
+              child: Row(
+                children: [
+                  // Icon
+                  Container(
+                    padding: const EdgeInsets.all(AppTheme.spacingMD),
+                    decoration: BoxDecoration(
+                      color: option.color.withOpacity(isDark ? 0.3 : 0.2),
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.radiusMedium),
+                    ),
+                    child: Icon(
+                      option.icon,
+                      color: option.color,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingMD),
+
+                  // Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          option.title,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? option.color : null,
+                              ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingXS),
+                        Text(
+                          option.description,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: isDark
+                                        ? AppTheme.darkForeground
+                                            .withOpacity(0.7)
+                                        : AppTheme.lightForeground
+                                            .withOpacity(0.7),
+                                  ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingSM),
+                        Wrap(
+                          spacing: AppTheme.spacingSM,
+                          runSpacing: AppTheme.spacingXS,
+                          children: option.features
+                              .map(
+                                (f) => Text(
+                                  f,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
+                                        color: option.color.withOpacity(0.8),
+                                      ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Radio
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? option.color
+                            : isDark
+                                ? AppTheme.darkMuted
+                                : AppTheme.lightMuted,
+                        width: 2,
+                      ),
+                      color: isSelected ? option.color : Colors.transparent,
+                    ),
+                    child: isSelected
+                        ? const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: Colors.white,
+                          )
+                        : null,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-      );
-    }
+      ),
+    );
   }
 }

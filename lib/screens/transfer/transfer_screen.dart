@@ -5,16 +5,18 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../models/transfer_file.dart';
 import '../../providers/transfer_provider.dart';
 import '../../services/network_service.dart';
-import '../../models/transfer_state.dart' show TransferTechnology;
+import '../../models/transfer_state.dart' show TransferTechnology, TransferMode;
 
 class TransferScreen extends StatefulWidget {
   final List<TransferFile> files;
   final TransferTechnology technology;
+  final TransferMode? mode;
   
   const TransferScreen({
     super.key,
     required this.files,
     required this.technology,
+    this.mode,
   });
 
   @override

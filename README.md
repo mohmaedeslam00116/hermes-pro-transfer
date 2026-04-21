@@ -1,198 +1,140 @@
-# Hermes - Local File Transfer App
+# Hermes 📡
 
-<div align="center">
-  <img src="assets/icon.png" alt="Hermes Logo" width="120"/>
-  
-  **Hermes** is a professional local file transfer application for Android that enables peer-to-peer file sharing over your local network without internet or Bluetooth.
+<p align="center">
+  <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases">
+    <img src="https://img.shields.io/github/v/release/mohmaedeslam00116/hermes-pro-transfer?include_prereleases&style=flat&color=0D9488" alt="Release">
+  </a>
+  <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/mohmaedeslam00116/hermes-pro-transfer?color=0D9488" alt="License">
+  </a>
+  <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/mohmaedeslam00116/hermes-pro-transfer/build.yml?color=0D9488" alt="Build">
+  </a>
+  <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases">
+    <img src="https://img.shields.io/github/downloads/mohmaedeslam00116/hermes-pro-transfer/total?color=0D9488" alt="Downloads">
+  </a>
+</p>
 
-  [![Flutter](https://img.shields.io/badge/Flutter-3.24.0-blue)](https://flutter.dev)
-  [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20LAN-green)](https://developer.android.com)
-  [![License](https://img.shields.io/badge/License-MIT-purple)](LICENSE)
-</div>
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-0D9488?style=for-the-badge&logo=android" alt="Android">
+  <img src="https://img.shields.io/badge/Framework-Flutter-02569B?style=for-the-badge&logo=flutter" alt="Flutter">
+</p>
 
----
-
-## Features
-
-### 🚀 Core Features
-- **Send Files**: Share files to any device on your local network
-- **Receive Files**: Download files shared by other devices
-- **QR Code Transfer**: Quick connection via QR code scanning
-- **Multiple Transfer Technologies**: Choose the best method for your needs
-
-### 🔧 Transfer Technologies
-
-| Technology | Description | Best For |
-|------------|-------------|----------|
-| **HTTP Server** | Simple and reliable | Most users, cross-platform |
-| **Wi-Fi Direct** | Peer-to-peer connection | No router needed |
-| **WebRTC** | Modern P2P with low latency | Fast, secure transfers |
-
-### ✨ Advanced Features
-- 📁 Multi-file selection and transfer
-- 📊 Real-time progress tracking
-- 🌙 Dark/Light theme support
-- 🔄 Automatic fallback on connection failure
-- 📱 Modern Material Design 3 UI
+<p align="center">
+  <strong>Hermes</strong> — تطبيق نقل الملفات المحلي للأندرويد لنقل الملفات بين الأجهزة عبر الشبكة المنزلية بدون إنترنت.
+</p>
 
 ---
 
-## Screenshots
+## ✨ المميزات
 
-| Dashboard | Send | Receive |
-|-----------|------|---------|
-| ![Dashboard](screenshots/dashboard.png) | ![Send](screenshots/send.png) | ![Receive](screenshots/receive.png) |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Flutter SDK 3.24.0+
-- Android SDK 35+
-- Android device with API 26+ (Android 8.0 Oreo)
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/mohmaedeslam00116/hermes-pro-transfer.git
-   cd hermes-pro-transfer
-   ```
-
-2. **Navigate to project:**
-   ```bash
-   cd hermes_pro
-   ```
-
-3. **Get dependencies:**
-   ```bash
-   flutter pub get
-   ```
-
-4. **Run the app:**
-   ```bash
-   flutter run
-   ```
-
-5. **Build debug APK:**
-   ```bash
-   flutter build apk --debug
-   ```
-
-6. **Build release APK:**
-   ```bash
-   flutter build apk --release
-   ```
+| الميزة | الوصف |
+|--------|-------|
+| 🚀 **نقل سريع** | نقل الملفات عبر Wi-Fi بسرعة عالية |
+| 📱 **سهول الاستخدام** | واجهة مستخدم بسيطة وبديهية |
+| 🔒 **أمان** | تشفير الاتصال عبر HTTPS |
+| 🌙 **دعم الوضع الليلي** | واجهة داكنة مريحة للعين |
+| 📲 **QR Code** | مسح QR للاتصال السريع |
+| 🔌 **بدون إنترنت** | يعمل محلياً دون الحاجة للأنترنت |
+| 🎯 **تقنيات متعددة** | HTTP, Wi-Fi Direct, WebRTC |
 
 ---
 
-## Project Structure
+## 📸 لقطات الشاشة
+
+<p align="center">
+  <img src="https://via.placeholder.com/300x600/0D9488/FFFFFF?text=Dashboard" width="150" alt="Dashboard">
+  <img src="https://via.placeholder.com/300x600/14B8A6/FFFFFF?text=Send" width="150" alt="Send">
+  <img src="https://via.placeholder.com/300x600/EA580C/FFFFFF?text=Receive" width="150" alt="Receive">
+</p>
+
+---
+
+## 🛠️ التقنيات المدعومة
+
+### 1. HTTP Server
+- الطريقة الأكثر موثوقية
+- تعمل على أي شبكة Wi-Fi
+- لا تحتاج لأي إعداد
+
+### 2. Wi-Fi Direct
+- اتصال مباشر بين الأجهزة
+- لا يحتاج راوتر
+- سرعات عالية جداً
+
+### 3. WebRTC
+- تقنية حديثة P2P
+- تشفير تلقائي
+- تأخير منخفض
+
+---
+
+## 📥 التنزيل
+
+### الإصدار الأخير (v1.0.0-beta.1)
+
+| الملف | الحجم | التحميل |
+|-------|-------|---------|
+| Release APK | 107 MB | [تحميل](https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases/download/v1.0.0-beta.1/app-release.apk) |
+
+---
+
+## 🏗️ بناء من المصدر
+
+```bash
+# استنساخ المشروع
+git clone https://github.com/mohmaedeslam00116/hermes-pro-transfer.git
+cd hermes-pro-transfer
+
+# تثبيت الاعتماديات
+flutter pub get
+
+# بناء APK
+flutter build apk --release
+```
+
+---
+
+## 📁 هيكل المشروع
 
 ```
-hermes_pro/
+hermes-pro-transfer/
 ├── lib/
-│   ├── main.dart                 # App entry point
 │   ├── core/
-│   │   ├── theme/
-│   │   │   └── app_theme.dart   # Light/Dark themes
-│   │   └── constants/
-│   │       └── app_constants.dart
-│   ├── models/
-│   │   ├── transfer_file.dart    # File model
-│   │   └── transfer_state.dart   # Transfer state model
-│   ├── providers/
-│   │   ├── app_provider.dart     # App settings
-│   │   └── transfer_provider.dart # Transfer logic
-│   ├── services/
-│   │   ├── network_service.dart  # Network utilities
-│   │   └── http_server_service.dart # HTTP server/client
-│   └── screens/
-│       ├── onboarding/          # First-run experience
-│       ├── dashboard/           # Main screen
-│       ├── technology_picker/   # Tech selection
-│       └── transfer/            # Send/Receive screens
-└── android/                     # Android configuration
+│   │   ├── constants/     # الثوابت
+│   │   └── theme/        # السمة والألوان
+│   ├── models/           # نماذج البيانات
+│   ├── providers/       # إدارة الحالة
+│   ├── services/        # الخدمات
+│   └── screens/         # واجهات المستخدم
+├── android/             # إعدادات الأندرويد
+├── ios/                # إعدادات iOS
+├── assets/             # الأصول
+├── LICENSE             # الترخيص (GPLv3)
+└── README.md           # هذا الملف
 ```
 
 ---
 
-## How It Works
+## 🤝 المساهمة
 
-### Sending Files
-1. Select "Send" on the dashboard
-2. Choose transfer technology (HTTP/Wi-Fi Direct/WebRTC)
-3. Select files to share
-4. Share the QR code or URL with the receiver
-5. Wait for connections and transfer to complete
-
-### Receiving Files
-1. Select "Receive" on the dashboard
-2. Scan the sender's QR code
-3. Preview and download incoming files
-4. Track progress in real-time
+نرحب بمساهماتكم! الرجاء قراءة [دليل المساهمة](CONTRIBUTING.md) قبل البدء.
 
 ---
 
-## Technology Stack
+## 📄 الترخيص
 
-- **Framework**: Flutter 3.24.0
-- **Language**: Dart 3.5.0
-- **State Management**: Provider
-- **Architecture**: Clean Architecture
-- **Target Platform**: Android (API 26+)
-
-### Key Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `provider` | State management |
-| `dio` | HTTP client |
-| `file_picker` | File selection |
-| `permission_handler` | Runtime permissions |
-| `network_info_plus` | Network utilities |
-| `qr_flutter` | QR code generation |
-| `mobile_scanner` | QR code scanning |
-| `flutter_webrtc` | WebRTC support |
+هذا المشروع مرخص تحت **GNU General Public License v3.0** - راجع [LICENSE](LICENSE) للتفاصيل.
 
 ---
 
-## CI/CD
+## ⚠️免责声明
 
-This project uses GitHub Actions for continuous integration:
-
-- ✅ **Flutter Analyze**: Code quality checks
-- ✅ **Debug Build**: Automatic APK generation
-- ✅ **Release Build**: Production-ready APK on main branch
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-- Inspired by [LocalSend](https://github.com/localsend/localsend) and [SHAREit](https://shareit.one/)
-- Built with ❤️ using Flutter
-- Designed for speed, simplicity, and reliability
+هذا البرنامج يوفر "كما هو" بدون أي ضمانات. استخدامك للبرنامج على مسؤوليتك الخاصة.
 
 ---
 
 <div align="center">
-  <p>Made with ❤️ by the Hermes Team</p>
-  <p>© 2024 Hermes. All rights reserved.</p>
+  <p>صنع بـ ❤️ بواسطة <a href="https://github.com/mohmaedeslam00116">Mohamed Eslam</a></p>
+  <p>Hermes © 2026</p>
 </div>
