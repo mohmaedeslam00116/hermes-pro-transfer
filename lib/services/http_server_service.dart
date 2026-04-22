@@ -13,9 +13,6 @@ class HttpServerService {
   int _totalBytesTransferred = 0;
   int _connectedClients = 0;
 
-  /// Security: Allowed base directory for file serving
-  static final String _allowedBasePath = '';
-
   bool get isRunning => _isRunning;
   int get connectedClients => _connectedClients;
   int get bytesTransferred => _totalBytesTransferred;
@@ -40,7 +37,6 @@ class HttpServerService {
           await _handleRequest(request, onProgress);
         },
         onError: (error) {
-          // Log error but don't crash
           print('Server error: $error');
         },
       );
@@ -60,25 +56,31 @@ class HttpServerService {
   ) async {
     try {
       final uri = request.uri;
-      // Security: Decode and sanitize path
       final rawPath = uri.path;
       final path = _sanitizePath(rawPath);
 
       if (path == null) {
-        // Invalid path - potential attack
         await _sendErrorResponse(request, HttpStatus.forbidden, 'Invalid path');
         return;
       }
 
+      // Parse query parameters
+      final queryParams = uri.queryParameters;
+      
       // API endpoints
       if (path == '/files' || path == '/api/files') {
         await _handleFilesList(request);
       } else if (path.startsWith('/download/') || path.startsWith('/api/download/')) {
-        await _handleFileDownload(request, path, onProgress);
+        // Extract filename from path
+        final pathParts = path.split('/').where((p) => p.isNotEmpty).toList();
+        final filename = pathParts.last;
+        await _handleFileDownload(request, filename, onProgress);
+      } else if (queryParams.containsKey('file')) {
+        // Alternative: /download?file=filename
+        await _handleFileDownload(request, queryParams['file']!, onProgress);
       } else if (path == '/status' || path == '/api/status') {
         await _handleStatus(request);
       } else if (path == '/') {
-        // Welcome page
         await _handleWelcome(request);
       } else {
         await _sendErrorResponse(request, HttpStatus.notFound, 'Not found');
@@ -94,23 +96,17 @@ class HttpServerService {
 
   /// Security: Sanitize paths to prevent path traversal attacks
   String? _sanitizePath(String rawPath) {
-    // Remove query string if present
     final pathOnly = rawPath.split('?').first;
-
-    // Check for path traversal attempts
-    // Block: ../, ..\, %2e%2e/, etc.
     final normalized = pathOnly.toLowerCase();
 
     if (normalized.contains('..') ||
         normalized.contains('%2e') ||
         normalized.contains('%2e%2e') ||
-        normalized.contains('\\')) {
-      return null; // Block the request
+        normalized.contains('\\\\')) {
+      return null;
     }
 
-    // Remove leading slashes and normalize
     final cleanPath = pathOnly.replaceAll(RegExp(r'^/+'), '/');
-
     return cleanPath;
   }
 
@@ -121,13 +117,14 @@ class HttpServerService {
         'name': f.name,
         'size': f.size,
         'mimeType': f.mimeType,
+        'downloadUrl': '/download/${Uri.encodeComponent(f.name)}',
       }).toList();
 
       request.response.headers.contentType = ContentType.json;
       request.response.headers.set('Access-Control-Allow-Origin', '*');
       request.response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
 
-      request.response.write(fileList);
+      request.response.write(fileList.toString());
       await request.response.close();
     } catch (e) {
       await _sendErrorResponse(request, HttpStatus.internalServerError, e.toString());
@@ -137,37 +134,27 @@ class HttpServerService {
   /// Handle file download with security checks
   Future<void> _handleFileDownload(
     HttpRequest request,
-    String path,
+    String filename,
     Function(int)? onProgress,
   ) async {
+    TransferFile? file;
+    
     try {
-      // Extract filename from path (last segment)
-      final pathParts = path.split('/').where((p) => p.isNotEmpty).toList();
-      if (pathParts.isEmpty) {
-        await _sendErrorResponse(request, HttpStatus.badRequest, 'Missing filename');
-        return;
-      }
-
-      final requestedFileName = pathParts.last;
+      // Decode filename if URL encoded
+      final decodedFilename = Uri.decodeComponent(filename);
 
       // Security: Validate filename against allowed files
-      final file = _files.firstWhere(
-        (f) => f.name == requestedFileName,
-        orElse: () => throw Exception('File not found'),
-      );
-
-      // Security: Validate file exists and path is safe
-      final fileEntity = File(file.path);
-      if (!await fileEntity.exists()) {
+      try {
+        file = _files.firstWhere((f) => f.name == decodedFilename);
+      } catch (_) {
         await _sendErrorResponse(request, HttpStatus.notFound, 'File not found');
         return;
       }
 
-      // Security: Additional path validation
-      final resolvedPath = fileEntity.resolveSymbolicLinksSync();
-      if (!resolvedPath.startsWith('/data') && !resolvedPath.startsWith('/storage')) {
-        // Unexpected path - block
-        await _sendErrorResponse(request, HttpStatus.forbidden, 'Access denied');
+      // Security: Validate file exists
+      final fileEntity = File(file.path);
+      if (!await fileEntity.exists()) {
+        await _sendErrorResponse(request, HttpStatus.notFound, 'File not found on disk');
         return;
       }
 
@@ -186,13 +173,10 @@ class HttpServerService {
       _connectedClients++;
 
       try {
-        // Stream file with proper cleanup
         final fileStream = fileEntity.openRead();
-
         var receivedBytes = 0;
 
         await for (final chunk in fileStream) {
-          // Safety check: Don't exceed file size
           if (receivedBytes + chunk.length > totalBytes) {
             break;
           }
@@ -208,7 +192,7 @@ class HttpServerService {
         _connectedClients = (_connectedClients - 1).clamp(0, 999999);
       }
     } catch (e) {
-      if (e.toString().contains('not found')) {
+      if (file == null) {
         await _sendErrorResponse(request, HttpStatus.notFound, 'File not found');
       } else {
         await _sendErrorResponse(request, HttpStatus.internalServerError, e.toString());
@@ -230,7 +214,7 @@ class HttpServerService {
       request.response.headers.contentType = ContentType.json;
       request.response.headers.set('Access-Control-Allow-Origin', '*');
 
-      request.response.write(status);
+      request.response.write(status.toString());
       await request.response.close();
     } catch (e) {
       await _sendErrorResponse(request, HttpStatus.internalServerError, e.toString());
@@ -239,6 +223,10 @@ class HttpServerService {
 
   /// Handle welcome page
   Future<void> _handleWelcome(HttpRequest request) async {
+    final fileListHtml = _files.map((f) => 
+      '<li><a href="/download/${Uri.encodeComponent(f.name)}">${f.name}</a> (${_formatBytes(f.size)})</li>'
+    ).join('\n');
+
     final html = '''
 <!DOCTYPE html>
 <html>
@@ -249,6 +237,10 @@ class HttpServerService {
     .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; }
     h1 { color: #0d9488; }
     .status { display: inline-block; padding: 5px 10px; border-radius: 4px; background: #d1fae5; color: #065f46; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 8px; border-bottom: 1px solid #eee; }
+    a { color: #0d9488; text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -258,6 +250,7 @@ class HttpServerService {
     <p><strong>Files available:</strong> ${_files.length}</p>
     <p><strong>Bytes transferred:</strong> ${_totalBytesTransferred}</p>
   </div>
+  ${_files.isNotEmpty ? '<h2>Available Files</h2><ul>$fileListHtml</ul>' : '<p>No files available</p>'}
   <p>Use Hermes app to scan QR code or enter this IP to connect.</p>
 </body>
 </html>
@@ -270,6 +263,13 @@ class HttpServerService {
     await request.response.close();
   }
 
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+  }
+
   /// Send error response
   Future<void> _sendErrorResponse(
     HttpRequest request,
@@ -280,27 +280,20 @@ class HttpServerService {
       request.response.statusCode = statusCode;
       request.response.headers.contentType = ContentType.text;
 
-      final errorJson = {
-        'error': message,
-        'code': statusCode,
-      };
-
-      request.response.write(errorJson);
+      request.response.write('{"error": "$message", "code": $statusCode}');
       await request.response.close();
     } catch (_) {
-      // Best effort error response
+      // Best effort
     }
   }
 
   /// Security: Sanitize filename for headers
   String _sanitizeFilename(String filename) {
-    // Remove any characters that could be malicious
     return filename
         .replaceAll('"', '')
         .replaceAll("'", '')
         .replaceAll('\n', '')
-        .replaceAll('\r', '')
-        .replaceAll(RegExp(r'[\x00-\x1F]'), '');
+        .replaceAll('\r', '');
   }
 
   /// Download file from remote URL
@@ -312,15 +305,31 @@ class HttpServerService {
       final dio = Dio();
       final directory = await getApplicationDocumentsDirectory();
 
+      // Parse URL to get filename
       final uri = Uri.parse(url);
-      final fileName = uri.queryParameters['file'] ?? 'download';
-      final saveFilePath = '${directory.path}/$fileName';
+      String saveFilePath;
+      
+      if (uri.queryParameters.containsKey('file')) {
+        final fileName = uri.queryParameters['file']!;
+        saveFilePath = '${directory.path}/${Uri.decodeComponent(fileName)}';
+      } else {
+        // Try to extract filename from path
+        final pathSegments = uri.pathSegments;
+        if (pathSegments.isNotEmpty) {
+          final fileName = pathSegments.last;
+          saveFilePath = '${directory.path}/${Uri.decodeComponent(fileName)}';
+        } else {
+          saveFilePath = '${directory.path}/download';
+        }
+      }
 
       await dio.download(
         url,
         saveFilePath,
         onReceiveProgress: (received, total) {
-          onProgress?.call(received, total);
+          if (total != -1) {
+            onProgress?.call(received, total);
+          }
         },
       );
 
@@ -331,13 +340,13 @@ class HttpServerService {
     }
   }
 
-  /// Stop the server and cleanup resources
-  Future<void> stopServer() async {
+  /// Stop the server and cleanup resources (sync version)
+  void stopServer() {
     _isRunning = false;
     _connectedClients = 0;
 
     if (_server != null) {
-      await _server!.close(force: true);
+      _server!.close(force: true);
       _server = null;
     }
 
