@@ -3,15 +3,19 @@ import 'dart:io';
 
 /// Device Discovery Service using UDP broadcast
 /// Discovers Hermes devices on the local network without manual IP entry
+/// 
+/// Note: Using ports 41234/41235 to avoid mDNS/Avahi conflicts (ports 5353/5354)
 class DeviceDiscoveryService {
-  static const int _broadcastPort = 5353;
-  static const int _discoveryPort = 5354;
+  // Use custom ports to avoid mDNS conflicts
+  static const int _broadcastPort = 41234;
+  static const int _discoveryPort = 41235;
   static const String _broadcastAddress = '255.255.255.255';
   static const String _discoveryMessage = 'HERMES_DISCOVERY';
   static const String _discoveryResponse = 'HERMES_RESPONSE';
   static const Duration _discoveryTimeout = Duration(seconds: 5);
 
   RawDatagramSocket? _socket;
+  RawDatagramSocket? _senderSocket;
   bool _isListening = false;
   final List<DiscoveredDevice> _discoveredDevices = [];
   StreamSubscription? _subscription;
@@ -33,7 +37,6 @@ class DeviceDiscoveryService {
       );
 
       _socket!.broadcast = true;
-
       _isListening = true;
       _discoveredDevices.clear();
 
@@ -124,25 +127,32 @@ class DeviceDiscoveryService {
   /// Send broadcast discovery message
   Future<void> _sendBroadcast() async {
     try {
-      // Create UDP socket for sending broadcast
-      final sender = await RawDatagramSocket.bind(
+      // Create and store UDP socket for sending broadcast
+      // Store reference for proper cleanup
+      _senderSocket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
         0, // Let system choose port
       );
 
-      sender.broadcast = true;
+      _senderSocket!.broadcast = true;
 
-      final message = '$_discovery_MESSAGE|8080|Hermes';
-      sender.send(
+      final message = '$_discoveryMessage|8080|Hermes';
+      _senderSocket!.send(
         message.codeUnits,
         InternetAddress(_broadcastAddress),
         _broadcastPort,
       );
 
-      // Cleanup after send
-      await sender.close();
+      // Close sender after short delay to allow send to complete
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _senderSocket?.close();
+        _senderSocket = null;
+      });
     } catch (e) {
       print('Broadcast error: $e');
+      // Cleanup on error
+      _senderSocket?.close();
+      _senderSocket = null;
     }
   }
 
@@ -156,14 +166,13 @@ class DeviceDiscoveryService {
     }
 
     try {
-      // Broadcast our response
-      final socket = await RawDatagramSocket.bind(
+      // Use existing socket or create new one
+      final socket = _senderSocket ?? await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
         0,
       );
 
       socket.broadcast = true;
-
       final message = '$_discoveryResponse|${await _getLocalIp()}|$port|$deviceName';
       socket.send(
         message.codeUnits,
@@ -171,8 +180,12 @@ class DeviceDiscoveryService {
         _broadcastPort,
       );
 
-      // Keep announcing periodically
-      // In a real app, you'd set up a periodic timer here
+      // Close if we created a new socket
+      if (_senderSocket == null) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          socket.close();
+        });
+      }
     } catch (e) {
       print('Announce error: $e');
     }
@@ -208,6 +221,11 @@ class DeviceDiscoveryService {
     if (_socket != null) {
       _socket!.close();
       _socket = null;
+    }
+
+    if (_senderSocket != null) {
+      _senderSocket!.close();
+      _senderSocket = null;
     }
 
     _isListening = false;
