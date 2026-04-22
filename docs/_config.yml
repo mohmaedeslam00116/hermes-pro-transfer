@@ -1,0 +1,18 @@
+# Build configuration for GitHub Pages
+# Docs folder is served at https://mohmaedeslam00116.github.io/hermes-pro-transfer/
+
+title: Hermes Pro
+description: Local file transfer app for Android - transfer files over LAN without internet
+url: https://mohmaedeslam00116.github.io/hermes-pro-transfer
+
+theme: jekyll-theme-minimal
+
+show_downloads: true
+
+# Disable default Jekyll processing for faster builds
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Analytics (optional)
+# google_analytics: G-XXXXXXXXXX

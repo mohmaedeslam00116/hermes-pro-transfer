@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hermes Pro — Local File Transfer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #08090a;
+      --color-surface: #0f1011;
+      --color-elevated: #191a1b;
+      --color-text: #f7f8f8;
+      --color-text-secondary: #d0d6e0;
+      --color-text-muted: #8a8f98;
+      --color-text-dim: #62666d;
+      --color-brand: #5e6ad2;
+      --color-accent: #7170ff;
+      --color-accent-hover: #828fff;
+      --color-border: rgba(255,255,255,0.08);
+      --color-border-subtle: rgba(255,255,255,0.05);
+      --color-success: #10b981;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    /* Grid Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(8, 9, 10, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--color-border-subtle);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+    }
+    
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+    
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--color-brand);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    
+    .nav-links a {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    
+    .nav-links a:hover {
+      color: var(--color-text);
+    }
+    
+    .nav-cta {
+      background: var(--color-brand);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    .nav-cta:hover {
+      background: var(--color-accent-hover);
+    }
+    
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 64px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(94, 106, 210, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-bottom: 32px;
+    }
+    
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--color-success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .hero h1 {
+      font-size: 72px;
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, var(--color-text) 0%, var(--color-text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero p {
+      font-size: 20px;
+      color: var(--color-text-muted);
+      max-width: 600px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+    }
+    
+    .hero-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    
+    .btn-primary {
+      background: var(--color-brand);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+      background: var(--color-accent-hover);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.03);
+      color: var(--color-text-secondary);
+      border: 1px solid var(--color-border);
+      padding: 14px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--color-text);
+    }
+    
+    /* Features Section */
+    .features {
+      padding: 120px 0;
+    }
+    
+    .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    
+    .section-header h2 {
+      font-size: 48px;
+      font-weight: 600;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    
+    .section-header p {
+      font-size: 18px;
+      color: var(--color-text-muted);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    
+    .feature-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+    
+    .feature-card:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--color-border);
+      transform: translateY(-4px);
+    }
+    
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(94, 106, 210, 0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    
+    .feature-card p {
+      font-size: 15px;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+    
+    /* Tech Stack */
+    .tech {
+      padding: 80px 0;
+      border-top: 1px solid var(--color-border-subtle);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    
+    .tech-grid {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    
+    .tech-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-text-muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .tech-item .tech-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--color-text-dim);
+      border-radius: 50%;
+    }
+    
+    /* Download Section */
+    .download {
+      padding: 120px 0;
+      text-align: center;
+    }
+    
+    .download-card {
+      background: linear-gradient(135deg, rgba(94, 106, 210, 0.1) 0%, rgba(113, 112, 255, 0.05) 100%);
+      border: 1px solid rgba(94, 106, 210, 0.2);
+      border-radius: 16px;
+      padding: 64px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    .download h2 {
+      font-size: 36px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    
+    .download p {
+      font-size: 16px;
+      color: var(--color-text-muted);
+      margin-bottom: 32px;
+    }
+    
+    .download .version {
+      display: inline-block;
+      background: rgba(255,255,255,0.05);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 24px;
+    }
+    
+    .download-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    
+    /* Footer */
+    footer {
+      padding: 48px 0;
+      border-top: 1px solid var(--color-border-subtle);
+    }
+    
+    footer .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    footer .copyright {
+      font-size: 13px;
+      color: var(--color-text-dim);
+    }
+    
+    footer .links {
+      display: flex;
+      gap: 24px;
+    }
+    
+    footer .links a {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    footer .links a:hover {
+      color: var(--color-text);
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 40px;
+        letter-spacing: -1px;
+      }
+      
+      .hero p {
+        font-size: 16px;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .tech-grid {
+        gap: 24px;
+      }
+      
+      .nav-links {
+        display: none;
+      }
+      
+      .download-card {
+        padding: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="logo">
+        <div class="logo-icon">📡</div>
+        <span>Hermes Pro</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer" target="_blank">GitHub</a>
+        <a href="#" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          <span>v1.0.1 Released</span>
+        </div>
+        <h1>Transfer Files<br>Locally & Securely</h1>
+        <p>Share files between Android devices over your Wi-Fi network. No internet, no cloud, no registration — just fast and secure local file transfer.</p>
+        <div class="hero-buttons">
+          <a href="#download" class="btn-primary">Download APK</a>
+          <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer" target="_blank" class="btn-secondary">View on GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section class="tech">
+    <div class="container">
+      <div class="tech-grid">
+        <div class="tech-item">
+          <span class="tech-dot"></span>
+          <span>Flutter</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-dot"></span>
+          <span>Dart</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-dot"></span>
+          <span>HTTP Server</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-dot"></span>
+          <span>UDP Discovery</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-dot"></span>
+          <span>QR Code</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Features</h2>
+        <p>Everything you need for fast local file transfer</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🚀</div>
+          <h3>High Speed Transfer</h3>
+          <p>Transfer files at maximum Wi-Fi speeds. No internet required — works entirely on your local network.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Secure & Private</h3>
+          <p>All transfers encrypted via HTTPS. Your files never leave your network.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Cross-Device</h3>
+          <p>Send files from any Android device to any other Android device on the same network.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📲</div>
+          <h3>QR Code Connection</h3>
+          <p>Simply scan a QR code to connect. No manual IP address entry needed.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌙</div>
+          <h3>Dark Mode</h3>
+          <p>Beautiful dark theme designed for comfortable night use.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔌</div>
+          <h3>No Internet Required</h3>
+          <p>Works completely offline. Perfect for areas with no connectivity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section class="download" id="download">
+    <div class="container">
+      <div class="download-card">
+        <h2>Download Hermes Pro</h2>
+        <p>Get the latest release and start sharing files instantly</p>
+        <div class="version">Version 1.0.1 • 66 MB</div>
+        <div class="download-buttons">
+          <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases/tag/v1.0.1" target="_blank" class="btn-primary">Download APK</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="copyright">
+        © 2026 Hermes Pro. Open source under MIT License.
+      </div>
+      <div class="links">
+        <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer" target="_blank">GitHub</a>
+        <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/blob/main/CHANGELOG.md" target="_blank">Changelog</a>
+        <a href="https://github.com/mohmaedeslam00116/hermes-pro-transfer/blob/main/LICENSE" target="_blank">License</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
