@@ -14,8 +14,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-0D9488?style=for-the-badge&logo=android" alt="Android">
-  <img src="https://img.shields.io/badge/Platform-Linux-0D9488?style=for-the-badge&logo=linux" alt="Linux">
-  <img src="https://img.shields.io/badge/Platform-Windows-0D9488?style=for-the-badge&logo=windows" alt="Windows">
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B?style=for-the-badge&logo=flutter" alt="Flutter">
 </p>
 
@@ -30,8 +28,7 @@
 | Feature | Description |
 |---------|-------------|
 | 🚀 **High Speed Transfer** | Transfer files over Wi-Fi at maximum speed |
-| 📱 **Multi-Platform** | Android, Linux, and Windows support |
-| 💻 **Desktop Ready** | Full desktop application with drag-and-drop |
+| 📱 **Android Only** | Native Android application |
 | 🔒 **Secure** | End-to-end encryption via HTTPS |
 | 🌙 **Dark Mode** | Comfortable dark theme for night use |
 | 📲 **QR Code** | Quick connection via QR code scanning |
@@ -47,10 +44,7 @@
 
 | Platform | File | Status |
 |----------|------|--------|
-| Android | Release APK | ✅ Available in Actions Artifacts |
-| Android | Debug APK | ✅ Available in Actions Artifacts |
-| Linux | Desktop Bundle | ✅ Available in Actions Artifacts |
-| Windows | Desktop Bundle | ✅ Available in Actions Artifacts |
+| Android | Release APK | ✅ [Download](https://github.com/mohmaedeslam00116/hermes-pro-transfer/releases/latest) |
 
 ### Quick Download
 Download from the [Actions](https://github.com/mohmaedeslam00116/hermes-pro-transfer/actions) tab:

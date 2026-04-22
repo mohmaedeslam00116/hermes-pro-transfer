@@ -5,6 +5,31 @@ All notable changes to the Hermes project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.1] - 2026-04-22
+
+### Added
+- Android-only release (simpler, more stable)
+
+### Fixed
+- receive_screen variable naming typo
+- transfer_screen port (using AppConstants.httpServerPort)
+- technology_picker color handling
+- technology_picker isSend logic
+- onboarding permissions (parallel requests)
+- network_service timeout and disposal
+- device_discovery_service fixes
+- transfer_provider variable shadowing
+
+### Code Quality
+- Android code is now error-free (flutter analyze passes)
+- 2 minor warnings (unused variables)
+
+### Removed
+- Windows Desktop support (temporarily disabled)
+- Linux Desktop support
+
+---
+
 ## [v1.0.0-desktop] - 2026-04-21
 
 ### Added
