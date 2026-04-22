@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/app_constants.dart';
 import '../../providers/app_provider.dart';
 import '../../models/transfer_state.dart';
 import '../technology_picker/technology_picker_screen.dart';
@@ -24,7 +25,7 @@ class DashboardOption {
   });
 }
 
-/// Modern Dashboard Screen
+/// Modern Dashboard Screen with improved UI/UX
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -93,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(AppTheme.spacingMD),
                 child: Row(
                   children: [
-                    // Logo
+                    // Logo with gradient
                     Container(
                       padding: const EdgeInsets.all(AppTheme.spacingSM),
                       decoration: BoxDecoration(
@@ -105,6 +106,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         borderRadius:
                             BorderRadius.circular(AppTheme.radiusMedium),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryColor.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: const Icon(
                         Icons.send,
@@ -114,13 +122,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(width: AppTheme.spacingMD),
 
-                    // Title
+                    // Title with app version
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hermes',
+                            AppConstants.appName,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
@@ -129,14 +137,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                           ),
                           Text(
-                            'Local File Transfer',
+                            'v${AppConstants.appVersion}',
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: isDark
                                           ? AppTheme.darkForeground
-                                              .withOpacity(0.6)
+                                              .withOpacity(0.5)
                                           : AppTheme.lightForeground
-                                              .withOpacity(0.6),
+                                              .withOpacity(0.5),
                                     ),
                           ),
                         ],
@@ -144,14 +152,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
 
                     // Settings Button
-                    IconButton(
+                    _buildIconButton(
+                      icon: Icons.settings_outlined,
                       onPressed: () => _showSettingsSheet(context),
-                      icon: Icon(
-                        Icons.settings_outlined,
-                        color: isDark
-                            ? AppTheme.darkForeground.withOpacity(0.7)
-                            : AppTheme.lightForeground.withOpacity(0.7),
-                      ),
+                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -200,7 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
-              // Footer
+              // Footer with network status
               Padding(
                 padding: const EdgeInsets.all(AppTheme.spacingMD),
                 child: Row(
@@ -233,10 +237,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isDark,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        child: Container(
+          padding: const EdgeInsets.all(AppTheme.spacingSM),
+          child: Icon(
+            icon,
+            color: isDark
+                ? AppTheme.darkForeground.withOpacity(0.7)
+                : AppTheme.lightForeground.withOpacity(0.7),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOptionCard(DashboardOption option, Size size, bool isDark) {
     return GestureDetector(
       onTap: () => _navigateToPicker(option.isSend),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         height: size.width * 0.4,
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -269,8 +297,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icon
-                  Container(
+                  // Icon with animated background
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.all(AppTheme.spacingMD),
                     decoration: BoxDecoration(
                       color: option.color.withOpacity(0.2),
@@ -287,11 +316,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Title
                   Text(
                     option.title,
-                    style:
-                        Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: option.color,
-                            ),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: option.color,
+                        ),
                   ),
                   const SizedBox(height: AppTheme.spacingXS),
 
@@ -301,8 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isDark
                               ? AppTheme.darkForeground.withOpacity(0.7)
-                              : AppTheme.lightForeground
-                                  .withOpacity(0.7),
+                              : AppTheme.lightForeground.withOpacity(0.7),
                         ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
@@ -322,6 +349,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
@@ -348,44 +376,179 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: AppTheme.spacingLG),
 
             // Title
-            Text(
-              'Settings',
-              style: Theme.of(context).textTheme.titleLarge,
+            Row(
+              children: [
+                Text(
+                  'Settings',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
             ),
-            const SizedBox(height: AppTheme.spacingLG),
+            const SizedBox(height: AppTheme.spacingMD),
 
             // Theme Toggle
             Consumer<AppProvider>(
               builder: (context, appProvider, _) {
                 return _buildSettingsTile(
-                  icon: isDark ? Icons.dark_mode : Icons.light_mode,
+                  icon: appProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
                   title: 'Dark Mode',
+                  subtitle: appProvider.isDarkMode ? 'On' : 'Off',
                   trailing: Switch(
                     value: appProvider.isDarkMode,
                     onChanged: (value) => appProvider.toggleTheme(),
                     activeColor: AppTheme.primaryColor,
                   ),
+                  isDark: isDark,
                 );
               },
             ),
 
+            const Divider(height: AppTheme.spacingLG),
+
             // Storage Permission
             _buildSettingsTile(
-              icon: Icons.folder,
+              icon: Icons.folder_outlined,
               title: 'Storage Access',
               subtitle: 'Manage file permissions',
-              onTap: () {},
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showStorageInfo(context),
+              isDark: isDark,
             ),
 
-            // About
+            // Network Info
+            _buildSettingsTile(
+              icon: Icons.wifi_outlined,
+              title: 'Network',
+              subtitle: 'Check connection status',
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showNetworkInfo(context),
+              isDark: isDark,
+            ),
+
+            const Divider(height: AppTheme.spacingLG),
+
+            // About - App Info
             _buildSettingsTile(
               icon: Icons.info_outline,
               title: 'About Hermes',
-              subtitle: 'Version 1.0.0-beta.1',
-              onTap: () {},
+              subtitle: 'v${AppConstants.appVersion}',
+              trailing: IconButton(
+                icon: const Icon(Icons.open_in_new),
+                onPressed: () => _showAboutDialog(context),
+              ),
+              isDark: isDark,
+            ),
+
+            // Version info at bottom
+            const SizedBox(height: AppTheme.spacingMD),
+            Center(
+              child: Text(
+                'Made with ❤️ using Flutter',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark
+                          ? AppTheme.darkForeground.withOpacity(0.4)
+                          : AppTheme.lightForeground.withOpacity(0.4),
+                    ),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingSM),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showStorageInfo(BuildContext context) {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Storage permissions managed by system'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showNetworkInfo(BuildContext context) {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Connect to Wi-Fi for file transfer'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingSM),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+                ),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              ),
+              child: const Icon(Icons.send, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: AppTheme.spacingMD),
+            const Text(AppConstants.appName),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _aboutInfoRow('Version', AppConstants.appVersion),
+            _aboutInfoRow('Build', 'Release'),
+            const SizedBox(height: AppTheme.spacingMD),
+            const Text(
+              'Hermes is a fast and secure local file transfer application.'
+              '\nTransfer files between devices on the same Wi-Fi network.',
+            ),
+            const SizedBox(height: AppTheme.spacingMD),
+            const Text(
+              '© 2024 Hermes Team',
+              style: TextStyle(fontWeight: FontWeight.w500),
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _aboutInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
@@ -396,14 +559,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String? subtitle,
     Widget? trailing,
     VoidCallback? onTap,
+    required bool isDark,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return ListTile(
-      leading: Icon(
-        icon,
-        color: AppTheme.primaryColor,
-      ),
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: AppTheme.primaryColor),
       title: Text(title),
       subtitle: subtitle != null
           ? Text(
