@@ -93,8 +93,8 @@ class FileUtils {
   }
 }
 
-/// Date/Time formatting utilities
-class DateUtils {
+/// Date/Time formatting utilities (renamed to avoid conflict with dart:ui DateUtils)
+class HermesDateUtils {
   /// Format duration for display
   static String formatDuration(Duration duration) {
     final hours = duration.inHours;
@@ -168,7 +168,6 @@ class ValidationUtils {
   static bool isValidFilename(String filename) {
     if (filename.isEmpty) return false;
     if (filename.contains('/') || filename.contains('\\')) return false;
-    if (filename.contains('\0')) return false;
     return true;
   }
 
@@ -184,16 +183,30 @@ class ValidationUtils {
 
   /// Sanitize filename for safe storage
   static String sanitizeFilename(String filename) {
-    // Remove invalid characters
-    var sanitized = filename.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
-    // Remove control characters
-    sanitized = sanitized.replaceAll(RegExp(r'[\x00-\x1f]'), '');
-    // Limit length
+    // Remove invalid characters for cross-platform
+    var sanitized = filename
+        .replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')
+        .trim();
+    
+    // Remove control characters (ASCII 0-31)
+    sanitized = sanitized.replaceAll(RegExp(r'[\x00-\x1F]'), '');
+    
+    // Limit length to 255 (max filename length on most filesystems)
     if (sanitized.length > 255) {
       final ext = FileUtils.getExtension(sanitized);
-      final name = sanitized.substring(0, sanitized.length - ext.length - 1);
-      sanitized = '${name.substring(0, 255 - ext.length - 1)}.$ext';
+      if (ext.isNotEmpty) {
+        final nameWithoutExt = sanitized.substring(0, sanitized.length - ext.length - 1);
+        sanitized = '${nameWithoutExt.substring(0, 255 - ext.length - 1)}.$ext';
+      } else {
+        sanitized = sanitized.substring(0, 255);
+      }
     }
+    
+    // Ensure filename is not empty after sanitization
+    if (sanitized.isEmpty) {
+      sanitized = 'unnamed_file';
+    }
+    
     return sanitized;
   }
 }
