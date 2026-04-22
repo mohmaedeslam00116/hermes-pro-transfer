@@ -5,13 +5,24 @@ import '../models/transfer_state.dart';
 import '../services/http_server_service.dart';
 import '../services/network_service.dart';
 
+/// Transfer Provider - manages file transfer state and operations
 class TransferProvider extends ChangeNotifier {
   final HttpServerService _httpServer = HttpServerService();
   final NetworkService _networkService = NetworkService();
-  
+
   TransferState _state = TransferState();
   TransferState get state => _state;
-  
+
+  /// Get current server URL
+  String? get serverUrl => _state.serverUrl;
+
+  /// Get transfer progress (0.0 to 1.0)
+  double get progress {
+    if (_state.totalBytes == 0) return 0;
+    return _state.bytesTransferred / _state.totalBytes;
+  }
+
+  /// Prepare files for sending
   Future<void> prepareSend(List<TransferFile> files) async {
     _state = TransferState(
       mode: TransferMode.send,
@@ -22,7 +33,8 @@ class TransferProvider extends ChangeNotifier {
     );
     notifyListeners();
   }
-  
+
+  /// Start HTTP server for file transfer
   Future<bool> startServer(TransferTechnology technology) async {
     _state = _state.copyWith(
       technology: technology,
@@ -30,7 +42,12 @@ class TransferProvider extends ChangeNotifier {
     );
     
     try {
+      // Get local IP address
       final ip = await _networkService.getLocalIpAddress();
+      if (ip == null) {
+        throw Exception('Could not get local IP address');
+      }
+      
       final url = 'http://$ip:${AppConstants.httpServerPort}';
       
       _state = _state.copyWith(
@@ -38,7 +55,9 @@ class TransferProvider extends ChangeNotifier {
         status: TransferStatus.transferring,
         startedAt: DateTime.now(),
       );
+      notifyListeners();
       
+      // Start the server
       await _httpServer.startServer(
         port: AppConstants.httpServerPort,
         files: _state.files,
@@ -47,7 +66,7 @@ class TransferProvider extends ChangeNotifier {
           notifyListeners();
         },
       );
-      
+
       return true;
     } catch (e) {
       _state = _state.copyWith(
@@ -58,7 +77,8 @@ class TransferProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
+  /// Connect to server and download files
   Future<bool> connectAndDownload(String url, String savePath) async {
     _state = TransferState(
       mode: TransferMode.receive,
@@ -74,6 +94,7 @@ class TransferProvider extends ChangeNotifier {
       );
       notifyListeners();
       
+      // Download file from server
       final savedPath = await _httpServer.downloadFile(
         url: url,
         onProgress: (bytesTransferred, totalBytes) {
@@ -86,7 +107,7 @@ class TransferProvider extends ChangeNotifier {
       );
       
       if (savedPath == null) {
-        throw Exception('Download failed');
+        throw Exception('Download failed - no file received');
       }
       
       _state = _state.copyWith(
@@ -104,16 +125,25 @@ class TransferProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
+  /// Reset transfer state
   void reset() {
     _httpServer.stopServer();
     _state = TransferState();
     notifyListeners();
   }
-  
+
+  /// Cancel current transfer
   void cancel() {
     _httpServer.stopServer();
     _state = _state.copyWith(status: TransferStatus.cancelled);
     notifyListeners();
+  }
+
+  /// Cleanup when provider is disposed
+  @override
+  void dispose() {
+    _httpServer.stopServer();
+    super.dispose();
   }
 }
