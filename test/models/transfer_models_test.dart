@@ -93,6 +93,18 @@ void main() {
       expect(state.progress, 0);
     });
 
+    test('should handle null startedAt in remainingTime', () {
+      final state = TransferState(
+        status: TransferStatus.transferring,
+        bytesTransferred: 500,
+        totalBytes: 1000,
+        // startedAt is null by default
+      );
+
+      // Should not throw, should return '--:--'
+      expect(state.remainingTime, '--:--');
+    });
+
     test('should copyWith preserve unmodified fields', () {
       final original = TransferState(
         mode: TransferMode.send,
