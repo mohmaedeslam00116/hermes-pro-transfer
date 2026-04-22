@@ -7,18 +7,19 @@ import 'dart:io';
 /// Note: Using ports 41234/41235 to avoid mDNS/Avahi conflicts (ports 5353/5354)
 class DeviceDiscoveryService {
   // Use custom ports to avoid mDNS conflicts
-  static const int _broadcastPort = 41234;
-  static const int _discoveryPort = 41235;
-  static const String _broadcastAddress = '255.255.255.255';
-  static const String _discoveryMessage = 'HERMES_DISCOVERY';
-  static const String _discoveryResponse = 'HERMES_RESPONSE';
-  static const Duration _discoveryTimeout = Duration(seconds: 5);
+  static const int broadcastPort = 41234;
+  static const int discoveryPort = 41235;
+  static const String broadcastAddress = '255.255.255.255';
+  static const String discoveryMessage = 'HERMES_DISCOVERY';
+  static const String discoveryResponse = 'HERMES_RESPONSE';
+  static const Duration discoveryTimeout = Duration(seconds: 5);
 
   RawDatagramSocket? _socket;
   RawDatagramSocket? _senderSocket;
   bool _isListening = false;
   final List<DiscoveredDevice> _discoveredDevices = [];
-  StreamSubscription? _subscription;
+  StreamSubscription<RawSocketEvent>? _subscription;
+  Timer? _cleanupTimer;
 
   List<DiscoveredDevice> get devices => List.unmodifiable(_discoveredDevices);
   bool get isListening => _isListening;
@@ -31,7 +32,7 @@ class DeviceDiscoveryService {
       // Bind to discovery port
       _socket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
-        _discoveryPort,
+        discoveryPort,
         reuseAddress: true,
         reusePort: true,
       );
@@ -42,7 +43,7 @@ class DeviceDiscoveryService {
 
       // Listen for incoming broadcasts
       _subscription = _socket!.listen((event) {
-        if (event.type == RawSocketEvent.read) {
+        if (event == RawSocketEvent.read) {
           final datagram = _socket!.receive();
           if (datagram != null) {
             _handleBroadcast(datagram);
@@ -72,7 +73,7 @@ class DeviceDiscoveryService {
 
       // Parse device info from message
       // Format: HERMES_RESPONSE|{ip}|{port}|{name}
-      if (data.startsWith(_discoveryResponse)) {
+      if (data.startsWith(discoveryResponse)) {
         final parts = data.split('|');
         if (parts.length >= 4) {
           final deviceIp = parts[1];
@@ -118,7 +119,7 @@ class DeviceDiscoveryService {
     await _sendBroadcast();
 
     // Wait for responses
-    await Future.delayed(_discoveryTimeout);
+    await Future.delayed(discoveryTimeout);
 
     // Return discovered devices
     return devices;
@@ -128,7 +129,6 @@ class DeviceDiscoveryService {
   Future<void> _sendBroadcast() async {
     try {
       // Create and store UDP socket for sending broadcast
-      // Store reference for proper cleanup
       _senderSocket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
         0, // Let system choose port
@@ -136,22 +136,29 @@ class DeviceDiscoveryService {
 
       _senderSocket!.broadcast = true;
 
-      final message = '$_discoveryMessage|8080|Hermes';
+      final message = '$discoveryMessage|8080|Hermes';
       _senderSocket!.send(
         message.codeUnits,
-        InternetAddress(_broadcastAddress),
-        _broadcastPort,
+        InternetAddress(broadcastAddress),
+        broadcastPort,
       );
 
-      // Close sender after short delay to allow send to complete
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _senderSocket?.close();
-        _senderSocket = null;
+      // Schedule cleanup after short delay
+      _cleanupTimer?.cancel();
+      _cleanupTimer = Timer(const Duration(milliseconds: 200), () {
+        _closeSenderSocket();
       });
     } catch (e) {
       print('Broadcast error: $e');
-      // Cleanup on error
+      _closeSenderSocket();
+    }
+  }
+
+  void _closeSenderSocket() {
+    try {
       _senderSocket?.close();
+      _senderSocket = null;
+    } catch (_) {
       _senderSocket = null;
     }
   }
@@ -161,28 +168,39 @@ class DeviceDiscoveryService {
     int port = 8080,
     String deviceName = 'Hermes',
   }) async {
-    if (!_isListening) {
-      await startListening();
-    }
-
     try {
+      if (!_isListening) {
+        await startListening();
+      }
+
       // Use existing socket or create new one
-      final socket = _senderSocket ?? await RawDatagramSocket.bind(
-        InternetAddress.anyIPv4,
-        0,
-      );
+      RawDatagramSocket socket;
+      bool shouldClose = false;
+      
+      if (_senderSocket == null) {
+        socket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv4,
+          0,
+        );
+        shouldClose = true;
+      } else {
+        socket = _senderSocket!;
+      }
 
       socket.broadcast = true;
-      final message = '$_discoveryResponse|${await _getLocalIp()}|$port|$deviceName';
+      final localIp = await _getLocalIp();
+      final message = '$discoveryResponse|$localIp|$port|$deviceName';
+      
       socket.send(
         message.codeUnits,
-        InternetAddress(_broadcastAddress),
-        _broadcastPort,
+        InternetAddress(broadcastAddress),
+        broadcastPort,
       );
 
       // Close if we created a new socket
-      if (_senderSocket == null) {
-        Future.delayed(const Duration(milliseconds: 100), () {
+      if (shouldClose) {
+        _cleanupTimer?.cancel();
+        _cleanupTimer = Timer(const Duration(milliseconds: 200), () {
           socket.close();
         });
       }
@@ -215,19 +233,20 @@ class DeviceDiscoveryService {
 
   /// Stop listening and cleanup
   Future<void> stopListening() async {
+    _cleanupTimer?.cancel();
+    _cleanupTimer = null;
+    
     _subscription?.cancel();
     _subscription = null;
 
     if (_socket != null) {
-      _socket!.close();
+      try {
+        _socket!.close();
+      } catch (_) {}
       _socket = null;
     }
 
-    if (_senderSocket != null) {
-      _senderSocket!.close();
-      _senderSocket = null;
-    }
-
+    _closeSenderSocket();
     _isListening = false;
   }
 
