@@ -133,7 +133,17 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               Navigator.pop(context);
               final ip = controller.text.trim();
               if (ip.isNotEmpty) {
-                final url = ip.startsWith('http') ? ip : 'http://$ip';
+                // Handle IPv6 addresses with scope ID
+                String url;
+                if (ip.startsWith('http')) {
+                  url = ip;
+                } else if (ip.contains(':')) {
+                  // IPv6 - extract clean address and wrap in brackets
+                  final cleanIp = ip.contains('%') ? ip.split('%').first : ip;
+                  url = 'http://[$cleanIp]';
+                } else {
+                  url = 'http://$ip';
+                }
                 _downloadFile(url);
               }
             },

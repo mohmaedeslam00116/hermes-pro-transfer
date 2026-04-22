@@ -275,7 +275,37 @@ class DiscoveredDevice {
     required this.lastSeen,
   });
 
-  String get url => 'http://$ip:$port';
+  /// Clean IPv6 address for URL usage
+  String _cleanIpForUrl(String addr) {
+    // Check if it's IPv6 (contains colons and possibly a scope ID)
+    if (addr.contains(':')) {
+      try {
+        // Try to parse as InternetAddress
+        final inetAddr = InternetAddress(addr);
+        if (inetAddr.type == InternetAddressType.IPv6) {
+          // Return the raw address without scope ID for URL
+          return inetAddr.rawAddress.isNotEmpty 
+              ? inetAddr.address 
+              : addr.split('%').first;
+        }
+      } catch (_) {
+        // If parsing fails, try to extract just the IP part before %
+        final cleanAddr = addr.split('%').first;
+        // Wrap in brackets for IPv6 URL
+        return '[$cleanAddr]';
+      }
+    }
+    return addr;
+  }
+
+  String get url {
+    final cleanIp = _cleanIpForUrl(ip);
+    // Check if already has brackets (IPv6)
+    if (cleanIp.startsWith('[')) {
+      return 'http://$cleanIp:$port';
+    }
+    return 'http://$ip:$port';
+  }
 
   bool get isOnline {
     return DateTime.now().difference(lastSeen).inSeconds < 30;

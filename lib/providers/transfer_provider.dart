@@ -48,7 +48,14 @@ class TransferProvider extends ChangeNotifier {
         throw Exception('Could not get local IP address');
       }
       
-      final url = 'http://$ip:${AppConstants.httpServerPort}';
+      // Handle IPv6 addresses
+      String cleanIp = ip;
+      if (ip.contains(':')) {
+        cleanIp = ip.contains('%') ? ip.split('%').first : ip;
+        cleanIp = '[$cleanIp]';
+      }
+      
+      final url = 'http://$cleanIp:${AppConstants.httpServerPort}';
       
       _state = _state.copyWith(
         serverUrl: url,
