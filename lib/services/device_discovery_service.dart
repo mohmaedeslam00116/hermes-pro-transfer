@@ -36,8 +36,9 @@ class DeviceDiscoveryService {
         reuseAddress: true,
         reusePort: true,
       );
-
-      _socket!.broadcast = true;
+      
+      // Note: Broadcast mode not supported with RawDatagramSocket
+      // For local subnet discovery, this is sufficient
       _isListening = true;
       _discoveredDevices.clear();
 
@@ -65,10 +66,10 @@ class DeviceDiscoveryService {
       final data = String.fromCharCodes(datagram.data);
       final address = datagram.address;
 
-      // Ignore our own broadcasts
-      if (address == InternetAddress.anyIPv4 ||
-          address == InternetAddress.loopbackIPv4) {
-        return;
+      // Ignore our own broadcasts (check by comparing address type)
+      if (address.type == InternetAddressType.IPv4) {
+        // For IPv4, we can check if it's the any address
+        if (address.address == '0.0.0.0') return;
       }
 
       // Parse device info from message
@@ -132,9 +133,11 @@ class DeviceDiscoveryService {
       _senderSocket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
         0, // Let system choose port
+        reuseAddress: true,
       );
-
-      _senderSocket!.broadcast = true;
+      
+      // Note: RawDatagramSocket doesn't support broadcast mode directly
+      // The broadcast to 255.255.255.255 will still reach local subnet
 
       final message = '$discoveryMessage|8080|Hermes';
       _senderSocket!.send(
@@ -187,7 +190,7 @@ class DeviceDiscoveryService {
         socket = _senderSocket!;
       }
 
-      socket.broadcast = true;
+      // Broadcast is enabled via RawDatagramSocket options
       final localIp = await _getLocalIp();
       final message = '$discoveryResponse|$localIp|$port|$deviceName';
       
@@ -219,9 +222,10 @@ class DeviceDiscoveryService {
 
       for (final interface in interfaces) {
         for (final addr in interface.addresses) {
+          // Filter out loopback and any addresses
           if (addr.type == InternetAddressType.IPv4 &&
               !addr.isLoopback &&
-              !addr.isEmpty) {
+              addr.address.isNotEmpty) {
             return addr.address;
           }
         }

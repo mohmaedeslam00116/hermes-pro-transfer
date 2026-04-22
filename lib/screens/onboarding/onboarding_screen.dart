@@ -96,15 +96,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   Future<void> _requestPermissions() async {
-    final permissions = [
+    // Request all permissions in parallel for faster onboarding
+    final results = await [
       Permission.storage,
       Permission.camera,
       Permission.location,
       Permission.nearbyWifiDevices,
-    ];
+    ].request();
 
-    for (final permission in permissions) {
-      await permission.request();
+    // Check for permanently denied permissions
+    for (final entry in results.entries) {
+      if (entry.value.isPermanentlyDenied) {
+        // Open app settings for the denied permission
+        await openAppSettings();
+        break;
+      }
     }
   }
 

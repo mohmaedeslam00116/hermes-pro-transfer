@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/transfer_file.dart';
 import '../../providers/transfer_provider.dart';
 import '../../services/network_service.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/transfer_state.dart' show TransferTechnology, TransferMode;
 
 /// Transfer Screen - إما للإرسال أو الاستقبال
@@ -44,7 +45,7 @@ class _TransferScreenState extends State<TransferScreen> {
       if (!mounted) return;
 
       setState(() {
-        _serverUrl = 'http://$ip:8080';
+        _serverUrl = 'http://$ip:${AppConstants.httpServerPort}';
       });
 
       // Start server after build
@@ -80,7 +81,7 @@ class _TransferScreenState extends State<TransferScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isSend = widget.mode == TransferMode.send || widget.files.isNotEmpty;
+    final isSend = widget.mode == TransferMode.send;
     final totalSize = widget.files.fold<int>(0, (sum, f) => sum + f.size);
 
     return Scaffold(
@@ -277,7 +278,7 @@ class _TransferScreenState extends State<TransferScreen> {
                             BorderRadius.circular(AppTheme.radiusMedium),
                       ),
                       child: QrImageView(
-                        data: '$_serverUrl?files=true',
+                        data: _serverUrl ?? '',
                         version: QrVersions.auto,
                         size: 180,
                       ),

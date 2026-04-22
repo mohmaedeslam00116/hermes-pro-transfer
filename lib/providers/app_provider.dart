@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
 import '../models/transfer_state.dart';
@@ -144,7 +145,8 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Reset provider state
+  /// Reset provider state (kept for API compatibility)
+  @visibleForTesting
   void reset() {
     _transferMode = null;
     _selectedTechnology = null;

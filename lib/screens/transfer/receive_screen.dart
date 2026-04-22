@@ -62,7 +62,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       });
 
       // Try to discover devices automatically
-      _discoverDevices = await _discoveryService.discoverDevices();
+      _discoveredDevices = await _discoveryService.discoverDevices();
       if (_discoveredDevices.isNotEmpty) {
         // Show discovered devices
         setState(() {

@@ -35,9 +35,9 @@ class TransferProvider extends ChangeNotifier {
   }
 
   /// Start HTTP server for file transfer
-  Future<bool> startServer(TransferTechnology technology) async {
+  Future<bool> startServer(TransferTechnology selectedTech) async {
     _state = _state.copyWith(
-      technology: technology,
+      technology: selectedTech,
       status: TransferStatus.waitingForConnection,
     );
     
