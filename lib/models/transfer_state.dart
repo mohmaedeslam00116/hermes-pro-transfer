@@ -66,22 +66,34 @@ class TransferState {
   }
   
   String get remainingTime {
-    if (status != TransferStatus.transferring || bytesTransferred == 0) {
+    // Null safety: check if startedAt exists
+    if (status != TransferStatus.transferring || bytesTransferred == 0 || startedAt == null) {
       return '--:--';
     }
-    final elapsed = DateTime.now().difference(startedAt!);
-    final speed = bytesTransferred / elapsed.inSeconds;
-    if (speed == 0) return '--:--';
-    final remaining = totalBytes - bytesTransferred;
-    final seconds = (remaining / speed).round();
-    if (seconds < 60) {
-      return '${seconds}s';
-    } else if (seconds < 3600) {
-      final minutes = (seconds / 60).round();
-      return '${minutes}m';
-    } else {
-      final hours = (seconds / 3600).round();
-      return '${hours}h';
+    
+    try {
+      final elapsed = DateTime.now().difference(startedAt!);
+      if (elapsed.inSeconds == 0) return '--:--';
+      
+      final speed = bytesTransferred / elapsed.inSeconds;
+      if (speed == 0) return '--:--';
+      
+      final remaining = totalBytes - bytesTransferred;
+      if (remaining <= 0) return '0s';
+      
+      final seconds = (remaining / speed).round();
+      
+      if (seconds < 60) {
+        return '${seconds}s';
+      } else if (seconds < 3600) {
+        final minutes = (seconds / 60).round();
+        return '${minutes}m';
+      } else {
+        final hours = (seconds / 3600).round();
+        return '${hours}h';
+      }
+    } catch (e) {
+      return '--:--';
     }
   }
   
