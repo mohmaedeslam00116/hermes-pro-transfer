@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/constants/app_constants.dart';
 import '../../providers/app_provider.dart';
 import '../../models/transfer_file.dart';
 import '../../models/transfer_state.dart';
@@ -478,8 +477,12 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                       child: ElevatedButton(
                         onPressed: _canProceed ? _startTransfer : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _selectedTechnology?.color ??
-                              AppTheme.primaryColor,
+                          backgroundColor: _technologies
+                              .firstWhere(
+                                (t) => t.technology == _selectedTechnology,
+                                orElse: () => _technologies.first,
+                              )
+                              .color,
                           padding: const EdgeInsets.symmetric(
                               vertical: AppTheme.spacingMD),
                           disabledBackgroundColor: isDark
