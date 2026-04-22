@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/transfer_state.dart';
+import '../../services/device_discovery_service.dart';
 import '../../services/network_service.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,10 +22,12 @@ class ReceiveScreen extends StatefulWidget {
 
 class _ReceiveScreenState extends State<ReceiveScreen> {
   final NetworkService _networkService = NetworkService();
+  final DeviceDiscoveryService _discoveryService = DeviceDiscoveryService();
   MobileScannerController? _scannerController;
   bool _isLoading = true;
   bool _isDownloading = false;
   bool _isCompleted = false;
+  bool _isScanning = true;
   bool _torchEnabled = false;
   String? _errorMessage;
   String? _downloadUrl;
@@ -32,6 +35,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   final String _downloadSpeed = '0 B/s';
   int _downloadedFiles = 0;
   int get _totalFiles => 1;
+  List<DiscoveredDevice> _discoveredDevices = [];
 
   @override
   void initState() {
@@ -52,10 +56,19 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     try {
       await _networkService.getLocalIpAddress();
       if (!mounted) return;
-      
+
       setState(() {
         _isLoading = false;
       });
+
+      // Try to discover devices automatically
+      _discoverDevices = await _discoveryService.discoverDevices();
+      if (_discoveredDevices.isNotEmpty) {
+        // Show discovered devices
+        setState(() {
+          _isScanning = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -77,11 +90,58 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           _downloadUrl = code;
           _isDownloading = true;
         });
-        
+
         await _downloadFile(code);
         break;
       }
     }
+  }
+
+  /// Connect to discovered device by IP
+  Future<void> _connectToDevice(DiscoveredDevice device) async {
+    setState(() {
+      _downloadUrl = device.url;
+      _isDownloading = true;
+    });
+
+    await _downloadFile(device.url);
+  }
+
+  /// Manual IP entry
+  void _showManualEntryDialog() {
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Server IP'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.url,
+          decoration: const InputDecoration(
+            hintText: '192.168.1.100:8080',
+            labelText: 'Server Address',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              final ip = controller.text.trim();
+              if (ip.isNotEmpty) {
+                final url = ip.startsWith('http') ? ip : 'http://$ip';
+                _downloadFile(url);
+              }
+            },
+            child: const Text('Connect'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _downloadFile(String url) async {
@@ -89,8 +149,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       final dio = Dio();
       final dir = await getExternalStorageDirectory();
       final savePath = dir?.path ?? '/storage/emulated/0/Download/Hermes';
-      
-      // Create Hermes folder if not exists
+
       final saveDir = Directory(savePath);
       if (!await saveDir.exists()) {
         await saveDir.create(recursive: true);
@@ -133,9 +192,28 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     });
   }
 
+  void _rescan() async {
+    setState(() {
+      _isScanning = true;
+      _errorMessage = null;
+    });
+
+    // Discover devices
+    _discoveredDevices = await _discoveryService.discoverDevices();
+
+    if (!mounted) return;
+
+    setState(() {
+      if (_discoveredDevices.isNotEmpty) {
+        _isScanning = false;
+      }
+    });
+  }
+
   @override
   void dispose() {
     _scannerController?.dispose();
+    _discoveryService.dispose();
     super.dispose();
   }
 
@@ -144,11 +222,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+      backgroundColor:
+          isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
       appBar: AppBar(
         title: const Text('Receive Files'),
-        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
-        foregroundColor: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+        backgroundColor:
+            isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+        foregroundColor:
+            isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
         elevation: 0,
         actions: [
           IconButton(
@@ -196,7 +277,110 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       return _buildErrorView(isDark);
     }
 
+    // Show discovered devices if any
+    if (!_isScanning && _discoveredDevices.isNotEmpty) {
+      return _buildDiscoveredDevicesView(isDark);
+    }
+
     return _buildScannerView(isDark);
+  }
+
+  Widget _buildDiscoveredDevicesView(bool isDark) {
+    return Column(
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              Icon(
+                Icons.devices,
+                size: 64,
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Devices Found',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color:
+                      isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Select a device to receive files from',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark ? AppTheme.darkMuted : AppTheme.lightMuted,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _discoveredDevices.length,
+                  itemBuilder: (context, index) {
+                    final device = _discoveredDevices[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.smartphone,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        title: Text(device.name),
+                        subtitle: Text(device.ip),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _connectToDevice(device),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              OutlinedButton.icon(
+                onPressed: _rescan,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Scan Again'),
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: _showManualEntryDialog,
+                icon: const Icon(Icons.keyboard),
+                label: const Text('Enter IP Manually'),
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _isScanning = true;
+                  });
+                },
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Scan QR Code'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildScannerView(bool isDark) {
@@ -266,12 +450,13 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+                    color:
+                        isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Point camera at sender\'s QR code to start receiving files',
+                  "Point camera at sender's QR code to start receiving files",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -280,6 +465,12 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 ),
                 const SizedBox(height: 24),
                 _buildTechnologyInfo(isDark),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: _showManualEntryDialog,
+                  icon: const Icon(Icons.keyboard),
+                  label: const Text('Enter IP Manually'),
+                ),
               ],
             ),
           ),
@@ -405,7 +596,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppTheme.darkForeground : AppTheme.lightForeground,
+                    color: isDark
+                        ? AppTheme.darkForeground
+                        : AppTheme.lightForeground,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -440,8 +633,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                   CircularProgressIndicator(
                     value: _downloadProgress,
                     strokeWidth: 8,
-                    backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
-                    valueColor: const AlwaysStoppedAnimation(AppTheme.primaryColor),
+                    backgroundColor:
+                        isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+                    valueColor:
+                        const AlwaysStoppedAnimation(AppTheme.primaryColor),
                   ),
                   Center(
                     child: Text(
@@ -530,7 +725,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -585,6 +781,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 setState(() {
                   _errorMessage = null;
                   _isDownloading = false;
+                  _isScanning = true;
                 });
               },
               icon: const Icon(Icons.refresh),
@@ -592,7 +789,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
