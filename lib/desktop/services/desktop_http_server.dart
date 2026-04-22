@@ -11,9 +11,8 @@ class DesktopHttpServer {
   int _port = 8080;
 
   String? get localIp => _localIp;
-  String? get downloadUrl => _localIp != null 
-      ? 'http://$_localIp:$_port/download' 
-      : null;
+  String? get downloadUrl =>
+      _localIp != null ? 'http://$_localIp:$_port/download' : null;
   bool get isRunning => _server != null;
   String? get currentFileName => _currentFileName;
 
@@ -29,7 +28,7 @@ class DesktopHttpServer {
 
     final router = Router();
 
-    // Main page with download link
+    // Security: main page with download link
     router.get('/', (Request request) {
       return Response.ok(
         _buildLandingPage(),
@@ -37,29 +36,47 @@ class DesktopHttpServer {
       );
     });
 
-    // Download endpoint
+    // Security: Download endpoint with path validation
     router.get('/download', (Request request) async {
-      final file = File(filePath);
+      final file = File(_sanitizePath(filePath));
       if (!await file.exists()) {
         return Response.notFound('File not found');
       }
 
+      // Security: Additional validation
+      final resolvedPath = file.resolveSymbolicLinksSync();
+      if (!_isValidPath(resolvedPath)) {
+        return Response.notFound('Invalid file path');
+      }
+
       final fileSize = await file.length();
-      
+
+      // Security: Sanitize filename for headers
+      final safeFileName = _sanitizeFilename(_currentFileName ?? 'download');
+
       return Response.ok(
         file.openRead(),
         headers: {
           'Content-Type': 'application/octet-stream',
-          'Content-Disposition': 'attachment; filename="$fileName"',
+          'Content-Disposition': 'attachment; filename="$safeFileName"',
           'Content-Length': fileSize.toString(),
+          'Access-Control-Allow-Origin': '*',
         },
       );
     });
 
-    // File info endpoint (for progress tracking)
+    // File info endpoint
     router.get('/info', (Request request) {
       return Response.ok(
-        '{"fileName": "$fileName", "ready": true}',
+        '{"fileName": "${_sanitizeFilename(_currentFileName ?? "unknown")}", "ready": true}',
+        headers: {'Content-Type': 'application/json'},
+      );
+    });
+
+    // Files list endpoint
+    router.get('/files', (Request request) {
+      return Response.ok(
+        '[{"name": "${_sanitizeFilename(_currentFileName ?? "unknown")}"}]',
         headers: {'Content-Type': 'application/json'},
       );
     });
@@ -79,7 +96,54 @@ class DesktopHttpServer {
     return 'http://$_localIp:$port';
   }
 
+  /// Security: Validate path to prevent traversal
+  String _sanitizePath(String path) {
+    // Remove any path traversal attempts
+    final normalized = path.replaceAll(RegExp(r'\.\.?[/\\]'), '');
+    return normalized;
+  }
+
+  /// Security: Validate final path is within allowed directories
+  bool _isValidPath(String path) {
+    // Allow files in common directories
+    final allowedPrefixes = [
+      '/home',
+      '/storage',
+      '/data',
+      '/tmp',
+      '/var',
+      'C:\\Users',
+      'C:\\Program',
+    ];
+
+    for (final prefix in allowedPrefixes) {
+      if (path.startsWith(prefix)) {
+        return true;
+      }
+    }
+
+    // Allow relative paths
+    if (!path.startsWith('/') && !path.contains('..')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Security: Sanitize filename for HTTP headers
+  String _sanitizeFilename(String filename) {
+    return filename
+        .replaceAll('"', '')
+        .replaceAll("'", '')
+        .replaceAll('\n', '')
+        .replaceAll('\r', '')
+        .replaceAll(RegExp(r'[\x00-\x1F]'), '')
+        .replaceAll('../', '')
+        .replaceAll('..\\', '');
+  }
+
   String _buildLandingPage() {
+    final safeName = _sanitizeFilename(_currentFileName ?? 'File');
     return '''
 <!DOCTYPE html>
 <html>
@@ -146,7 +210,7 @@ class DesktopHttpServer {
     <div class="icon">📁</div>
     <h1>Hermes File Transfer</h1>
     <p>A file is waiting for you</p>
-    <div class="filename">$_currentFileName</div>
+    <div class="filename">$safeName</div>
     <a href="/download" class="download-btn">Download File</a>
     <div class="url-box">Powered by Hermes</div>
   </div>
@@ -174,7 +238,6 @@ class DesktopHttpServer {
   };
 
   String _getLocalIp() {
-    // Use sync fallback that reads /proc/net/tcp directly
     try {
       final file = File('/proc/net/tcp');
       if (file.existsSync()) {
