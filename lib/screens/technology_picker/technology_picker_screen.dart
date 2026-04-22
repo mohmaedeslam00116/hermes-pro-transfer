@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/app_constants.dart';
 import '../../providers/app_provider.dart';
 import '../../models/transfer_file.dart';
 import '../../models/transfer_state.dart';
@@ -29,7 +30,7 @@ class TechnologyOption {
   });
 }
 
-/// Modern Technology Picker Screen
+/// Modern Technology Picker Screen with improved UI/UX
 class TechnologyPickerScreen extends StatefulWidget {
   final TransferMode mode;
 
@@ -46,6 +47,7 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
   TransferTechnology? _selectedTechnology;
   List<TransferFile> _selectedFiles = [];
   bool _isLoading = false;
+  String? _errorMessage;
 
   static const List<TechnologyOption> _technologies = [
     TechnologyOption(
@@ -89,11 +91,17 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
   void _selectTechnology(TechnologyOption option) {
     setState(() {
       _selectedTechnology = option.technology;
+      _errorMessage = null;
     });
   }
 
   Future<void> _pickFiles() async {
-    setState(() => _isLoading = true);
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -101,7 +109,7 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
         type: FileType.any,
       );
 
-      if (result != null) {
+      if (result != null && result.files.isNotEmpty) {
         final files = result.files.map((file) {
           return TransferFile(
             name: file.name,
@@ -116,16 +124,20 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking files: $e')),
-        );
-      }
+      setState(() {
+        _errorMessage = 'Failed to pick files: ${e.toString()}';
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _clearFiles() {
+    setState(() {
+      _selectedFiles = [];
+    });
   }
 
   String _getMimeType(String extension) {
@@ -150,14 +162,38 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
     }
   }
 
+  bool get _canProceed {
+    // Must select a technology
+    if (_selectedTechnology == null) return false;
+    
+    // For send mode, need at least one file selected
+    if (widget.mode == TransferMode.send && _selectedFiles.isEmpty) return false;
+    
+    return true;
+  }
+
   void _startTransfer() {
-    if (_selectedTechnology == null) return;
+    // Validate before proceeding
+    if (!_canProceed) {
+      if (_selectedTechnology == null) {
+        setState(() {
+          _errorMessage = 'Please select a transfer method';
+        });
+        return;
+      }
+      if (widget.mode == TransferMode.send && _selectedFiles.isEmpty) {
+        setState(() {
+          _errorMessage = 'Please select files to send';
+        });
+        return;
+      }
+      return;
+    }
 
     final appProvider = context.read<AppProvider>();
     appProvider.setTechnology(_selectedTechnology!);
 
     if (widget.mode == TransferMode.send) {
-      // Send mode - show TransferScreen with files
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => TransferScreen(
@@ -168,7 +204,6 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
         ),
       );
     } else {
-      // Receive mode - show ReceiveScreen with QR scanner
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ReceiveScreen(
@@ -183,6 +218,10 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSend = widget.mode == TransferMode.send;
+    final selectedTech = _technologies.firstWhere(
+      (t) => t.technology == _selectedTechnology,
+      orElse: () => _technologies.first,
+    );
 
     return Scaffold(
       body: Container(
@@ -220,13 +259,17 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                         children: [
                           Text(
                             isSend ? 'Send Files' : 'Receive Files',
-                            style:
-                                Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           Text(
-                            isSend ? 'Select files to share' : 'Connect to sender',
+                            isSend
+                                ? 'Select files to share'
+                                : 'Connect to sender',
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: isDark
@@ -258,7 +301,9 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                       ),
                       const SizedBox(height: AppTheme.spacingSM),
                       Text(
-                        'Select how you want to transfer your files',
+                        isSend
+                            ? 'Select how you want to send your files'
+                            : 'Select how you want to receive files',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: isDark
                                   ? AppTheme.darkForeground.withOpacity(0.6)
@@ -277,22 +322,133 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                           child: _buildTechnologyCard(tech, isDark),
                         ),
                       ),
+
+                      // Error message
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: AppTheme.spacingMD),
+                        Container(
+                          padding: const EdgeInsets.all(AppTheme.spacingMD),
+                          decoration: BoxDecoration(
+                            color: AppTheme.errorColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMedium),
+                            border: Border.all(
+                              color: AppTheme.errorColor.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: AppTheme.errorColor,
+                                size: 20,
+                              ),
+                              const SizedBox(width: AppTheme.spacingSM),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    color: AppTheme.errorColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ),
 
               // Bottom Section
-              Padding(
+              Container(
                 padding: const EdgeInsets.all(AppTheme.spacingMD),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppTheme.darkSurface.withOpacity(0.8)
+                      : AppTheme.lightSurface.withOpacity(0.8),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppTheme.radiusXL),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
                 child: Column(
                   children: [
-                    // File Picker Button (for Send mode)
+                    // File Selection (for Send mode)
                     if (isSend && _selectedTechnology != null) ...[
+                      // Selected files list
+                      if (_selectedFiles.isNotEmpty) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppTheme.spacingMD),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppTheme.darkMuted.withOpacity(0.3)
+                                : AppTheme.lightMuted,
+                            borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMedium),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${_selectedFiles.length} file(s) selected',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 18),
+                                    onPressed: _clearFiles,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppTheme.spacingSM),
+                              Text(
+                                _selectedFiles
+                                    .map((f) => f.name)
+                                    .join(', '),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? AppTheme.darkForeground
+                                              .withOpacity(0.6)
+                                          : AppTheme.lightForeground
+                                              .withOpacity(0.6),
+                                    ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingMD),
+                      ],
+                      
+                      // File Picker Button
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: _isLoading ? null : _pickFiles,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: AppTheme.spacingMD),
+                          ),
                           icon: _isLoading
                               ? const SizedBox(
                                   width: 16,
@@ -301,11 +457,15 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Icon(Icons.attach_file),
+                              : Icon(
+                                  _selectedFiles.isEmpty
+                                      ? Icons.add
+                                      : Icons.add_circle_outline,
+                                ),
                           label: Text(
                             _selectedFiles.isEmpty
                                 ? 'Pick Files to Send'
-                                : '${_selectedFiles.length} file(s) selected',
+                                : 'Add More Files',
                           ),
                         ),
                       ),
@@ -316,19 +476,37 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: (_selectedTechnology != null &&
-                                (isSend ? _selectedFiles.isNotEmpty || true : true))
-                            ? _startTransfer
-                            : null,
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: AppTheme.spacingSM),
-                          child: Text(
-                            isSend ? 'Send Files' : 'Continue',
-                            style: const TextStyle(fontSize: 16),
-                          ),
+                        onPressed: _canProceed ? _startTransfer : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedTechnology?.color ??
+                              AppTheme.primaryColor,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: AppTheme.spacingMD),
+                          disabledBackgroundColor: isDark
+                              ? AppTheme.darkMuted
+                              : AppTheme.lightMuted,
+                        ),
+                        child: Text(
+                          isSend ? 'Send Files' : 'Continue',
+                          style: const TextStyle(fontSize: 16),
                         ),
                       ),
+                    ),
+                    
+                    // Hint text
+                    const SizedBox(height: AppTheme.spacingSM),
+                    Text(
+                      isSend
+                          ? 'Select at least one file to continue'
+                          : 'Select a transfer method to continue',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? AppTheme.darkForeground
+                                    .withOpacity(0.4)
+                                : AppTheme.lightForeground
+                                    .withOpacity(0.4),
+                          ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -381,7 +559,8 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
               child: Row(
                 children: [
                   // Icon
-                  Container(
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.all(AppTheme.spacingMD),
                     decoration: BoxDecoration(
                       color: option.color.withOpacity(isDark ? 0.3 : 0.2),
@@ -445,8 +624,9 @@ class _TechnologyPickerScreenState extends State<TechnologyPickerScreen> {
                     ),
                   ),
 
-                  // Radio
-                  Container(
+                  // Radio indicator
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
